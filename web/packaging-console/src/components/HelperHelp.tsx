@@ -1,6 +1,8 @@
 import { BookOpen, Download, Laptop2, ShieldCheck, Wrench } from 'lucide-react'
 import { DEFAULT_HELPER_URL, useBackendStatus } from '../state/backend'
 import { HELPER_DOWNLOAD_URL, HELPER_LATEST_VERSION, HELPER_RELEASES_PAGE, HELPER_SHA256 } from '../state/helperLinks'
+import { geAppSolutionsUrl } from '../state/outbound'
+import { smartScreenAdvice, smartScreenWhy } from '../state/helperSigning'
 import { isUpdateAvailable } from '../state/helperVersion'
 import { CopyCommand } from './ui/CopyCommand'
 import { Panel } from './ui/Panel'
@@ -93,8 +95,7 @@ export function HelperSetupPanel({ defaultCollapsed = false, forceExpanded = fal
           Quit. It listens only on your own computer ({DEFAULT_HELPER_URL}), and quits by itself a few minutes after you close the site. From then on, the{' '}
           <strong>Start the Helper</strong> button starts it for you.{' '}
           <span className="text-muted">
-            Early builds are not code-signed yet, so Windows SmartScreen may say &ldquo;Windows protected your PC&rdquo;: choose More info, then Run
-            anyway. If Windows offers no Run anyway (common on work PCs), right-click the downloaded file, choose Properties, tick{' '}
+            {smartScreenAdvice()} If Windows offers no Run anyway (common on work PCs), right-click the downloaded file, choose Properties, tick{' '}
             <strong>Unblock</strong>, press OK and run it again.
           </span>
         </li>
@@ -176,7 +177,7 @@ export function AboutHelperPanel({ defaultCollapsed = false, forceExpanded = fal
             This is v{HELPER_LATEST_VERSION}, about 47 MB, from this project&apos;s GitHub releases. Its SHA-256 should match this value; in PowerShell,
             run <code>Get-FileHash .\WinRelease.Helper.exe</code> and compare:
             <code className="mt-1 block break-all rounded bg-panel-alt px-2 py-1 text-[11px] text-ink">{HELPER_SHA256}</code>
-            Early builds are not code-signed yet, which is why Windows SmartScreen asks you to confirm.
+            {smartScreenWhy()}
           </dd>
         </div>
         <div className={row}>
@@ -246,7 +247,7 @@ export function MoreThanBasicPanel({ defaultCollapsed = false, forceExpanded = f
     <Panel icon={Laptop2} title="Need more than a basic MSI?" defaultCollapsed={defaultCollapsed} forceExpanded={forceExpanded}>
       <p className="text-sm text-muted">
         WinRelease builds basic installers. For custom actions, features, upgrades, signing or enterprise packaging, see{' '}
-        <a className="text-brand hover:underline" href="https://geappsolutions.com/" target="_blank" rel="noreferrer">
+        <a className="text-brand hover:underline" href={geAppSolutionsUrl('settings-more-than-basic')} target="_blank" rel="noreferrer">
           geappsolutions.com
         </a>
         .

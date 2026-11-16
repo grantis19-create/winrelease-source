@@ -12,6 +12,25 @@ export interface NewsEntry {
  */
 export const NEWS: NewsEntry[] = [
   {
+    id: '2026-11-16-registry-layout',
+    date: '16 November 2026',
+    title: 'Registry: laid out like regedit, and the Custom URL Scheme button is gone',
+    items: [
+      'The registry tree now starts with Computer, lists the hives in regedit’s order, shows HKEY_CURRENT_CONFIG greyed (Windows Installer cannot write there), and has an address-bar path above it.',
+      'The Custom URL Scheme button was removed: it wrote a typed name straight into HKEY_CLASSES_ROOT, and other packaging tools do not offer it as a preset. Projects that already have such entries keep working, and you can still create the keys by hand in the tree.',
+    ],
+  },
+  {
+    id: '2026-11-16-registry-32bit',
+    date: '16 November 2026',
+    title: 'Registry: the 32-bit part is now visible, and imports are stricter',
+    items: [
+      'In a 64-bit package the registry tree now shows WOW6432Node under HKEY_LOCAL_MACHINE\SOFTWARE, greyed until something is in it, with a 32-bit tag. Right-click it and choose Add Entry Here to write a 32-bit entry by hand. Nothing is staged under the current user, because Windows shares that part between 32-bit and 64-bit programs.',
+      'A .reg import now warns about values Windows Installer cannot write (a QWORD is kept as binary, and says so; before, it was dropped), a doubled WOW6432Node, a value listed twice, and a path into one user’s profile. The warnings are advice: you can still create anything by hand.',
+      'A WOW6432Node typed inside another is flagged in the tree. The build removes exactly one WOW6432Node and never adds one, so it cannot grow into WOW6432Node\WOW6432Node by itself.',
+    ],
+  },
+  {
     id: '2026-11-16-source-and-feedback',
     date: '16 November 2026',
     title: 'Source open to inspection, and feedback on GitHub',

@@ -71,6 +71,10 @@ export function PrivacyPage() {
             do not use that to identify visitors.
           </li>
           <li>
+            Links from WinRelease to our own site, geappsolutions.com, carry a short tag saying you came from WinRelease and which page the link was on, so that site can
+            count the visit. The tag holds nothing about you or your project.
+          </li>
+          <li>
             The Helper download comes from GitHub Releases. GitHub processes the download request under its own privacy policy and counts downloads. We see the download total,
             not who downloaded.
           </li>

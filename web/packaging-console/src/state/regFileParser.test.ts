@@ -141,3 +141,66 @@ describe('parseRegFile', () => {
     ]);
   })
 })
+
+describe('parseRegFile strict warnings', () => {
+  it('warns that a QWORD cannot be written by Windows Installer and is imported as binary', () => {
+    const result = parseRegFile(`Windows Registry Editor Version 5.00
+
+[HKEY_LOCAL_MACHINE\\SOFTWARE\\Vendor\\App]
+"Big"=hex(b):01,00,00,00,00,00,00,00
+`)
+    expect(result.entries[0].valueType).toBe('binary')
+    expect(result.warnings).toHaveLength(1)
+    expect(result.warnings[0]).toContain('REG_QWORD')
+    expect(result.warnings[0]).toContain("'Big'")
+  })
+
+  it('warns about other types Windows Installer cannot write, and not about plain binary', () => {
+    const result = parseRegFile(`Windows Registry Editor Version 5.00
+
+[HKEY_LOCAL_MACHINE\\SOFTWARE\\Vendor\\App]
+"None"=hex(0):01,02
+"Plain"=hex:01,02
+`)
+    expect(result.warnings).toHaveLength(1)
+    expect(result.warnings[0]).toContain('REG_NONE')
+  })
+
+  it('warns when WOW6432Node sits inside WOW6432Node, and keeps the key as written', () => {
+    const result = parseRegFile(`Windows Registry Editor Version 5.00
+
+[HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\WOW6432Node\\Vendor]
+"A"="1"
+
+[HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\Vendor]
+"A"="1"
+`)
+    expect(result.warnings).toHaveLength(1)
+    expect(result.warnings[0]).toContain('WOW6432Node inside WOW6432Node')
+    expect(result.entries[0].key).toBe('SOFTWARE\\WOW6432Node\\WOW6432Node\\Vendor')
+  })
+
+  it('warns about a value listed twice, and about a path into one user profile', () => {
+    const result = parseRegFile(`Windows Registry Editor Version 5.00
+
+[HKEY_LOCAL_MACHINE\\SOFTWARE\\Vendor\\App]
+"Dup"="1"
+"dup"="2"
+"Path"="C:\\\\Users\\\\jsmith\\\\AppData\\\\Local\\\\App\\\\x.exe"
+"Shared"="C:\\\\Users\\\\Public\\\\Documents\\\\x.txt"
+`)
+    expect(result.warnings.some((w) => w.includes('more than once'))).toBe(true)
+    expect(result.warnings.some((w) => w.includes("specific user's profile"))).toBe(true)
+    expect(result.warnings.some((w) => w.includes('Shared'))).toBe(false)
+  })
+
+  it('stays quiet for a clean file', () => {
+    const result = parseRegFile(`Windows Registry Editor Version 5.00
+
+[HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\Vendor\\App]
+"Name"="x"
+"Count"=dword:00000002
+`)
+    expect(result.warnings).toEqual([])
+  })
+})

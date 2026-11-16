@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { createEmptyManifest } from '../types/manifest'
-import { entriesAtTarget, entryCountUnderTarget, wowRegistryKind, subkeysUnderTarget } from './registryTargets'
+import { entriesAtTarget, entryCountUnderTarget, isInThirtyTwoBitView, stagedSubkeys, subkeysUnderTarget, wowNodeCount, wowRegistryKind } from './registryTargets'
 
 function manifestWithRegistry(entries: { key: string; name: string; root?: 'hklm' | 'hkcu' }[]) {
   return {
@@ -89,5 +89,36 @@ describe('registry keys ignore case', () => {
     expect(subkeysUnderTarget(manifest, { root: 'hklm', keyPrefix: '' })).toEqual(['SOFTWARE'])
     expect(subkeysUnderTarget(manifest, { root: 'hklm', keyPrefix: 'Software' })).toEqual(['A', 'B'])
     expect(entryCountUnderTarget(manifest, { root: 'hklm', keyPrefix: 'software' })).toBe(2)
+  })
+})
+
+describe('32-bit staging (ADR 0118)', () => {
+  it('stages SOFTWARE under HKLM and WOW6432Node under SOFTWARE in a 64-bit package only', () => {
+    expect(stagedSubkeys('hklm', '', 'x64')).toEqual(['SOFTWARE'])
+    expect(stagedSubkeys('hklm', 'software', 'arm64')).toEqual(['WOW6432Node'])
+    expect(stagedSubkeys('hklm', 'SOFTWARE\\Vendor', 'x64')).toEqual([])
+    expect(stagedSubkeys('hklm', '', 'x86')).toEqual([])
+    expect(stagedSubkeys('hklm', 'SOFTWARE', 'x86')).toEqual([])
+  })
+
+  it('stages nothing under HKCU, HKCR or HKU (Windows shares HKCU\\SOFTWARE between the views)', () => {
+    for (const root of ['hkcu', 'hkcr', 'hku'] as const) {
+      expect(stagedSubkeys(root, '', 'x64')).toEqual([])
+      expect(stagedSubkeys(root, 'SOFTWARE', 'x64')).toEqual([])
+    }
+  })
+
+  it('counts WOW6432Node segments so a nested one can be flagged', () => {
+    expect(wowNodeCount('SOFTWARE\\Vendor')).toBe(0)
+    expect(wowNodeCount('SOFTWARE\\WOW6432Node\\Vendor')).toBe(1)
+    expect(wowNodeCount('software\\wow6432node\\WOW6432Node\\X')).toBe(2)
+  })
+
+  it('treats HKLM SOFTWARE WOW6432Node and below as the 32-bit view in a 64-bit package only', () => {
+    expect(isInThirtyTwoBitView('hklm', 'SOFTWARE\\WOW6432Node', 'x64')).toBe(true)
+    expect(isInThirtyTwoBitView('hklm', 'SOFTWARE\\WOW6432Node\\Vendor', 'x64')).toBe(true)
+    expect(isInThirtyTwoBitView('hklm', 'SOFTWARE\\Vendor', 'x64')).toBe(false)
+    expect(isInThirtyTwoBitView('hkcu', 'SOFTWARE\\WOW6432Node\\Vendor', 'x64')).toBe(false)
+    expect(isInThirtyTwoBitView('hklm', 'SOFTWARE\\WOW6432Node\\Vendor', 'x86')).toBe(false)
   })
 })

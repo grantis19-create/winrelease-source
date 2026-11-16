@@ -64,4 +64,43 @@ public class Wow6432RedirectTests
         Assert.Equal(@"SOFTWARE\WOW6432Node\X", value.Attribute("Key")!.Value);
         Assert.Null(value.Parent!.Attribute("Bitness"));
     }
+
+    private static WinReleaseManifest ManifestWith(params string[] hklmKeys) => new()
+    {
+        Name = "App",
+        Manufacturer = "Acme",
+        DisplayVersion = "1.0.0",
+        UpgradeCode = Guid.Parse("77777777-7777-7777-7777-777777777777"),
+        Registry = hklmKeys.Select((key, i) => new RegistryEntry { Root = RegistryRoot.Hklm, Key = key, Name = "V" + i, Value = "1" }).ToList(),
+    };
+
+    /// <summary>The guard against the Wow6432Node\Wow6432Node loop seen in badly authored packages: one WOW6432Node typed in a key becomes none in the built
+    /// key (the 32-bit Component supplies it through Windows), so the result never holds more than the author wrote, minus the one Windows redirects.</summary>
+    [Fact]
+    public void Generate_ASingleWow6432Node_BecomesNoneInTheBuiltKey_AndTheComponentIs32Bit()
+    {
+        var doc = WxsGenerator.Generate(ManifestWith(@"SOFTWARE\WOW6432Node\Acme"), "C:/source");
+
+        var value = doc.Descendants(Ns + "RegistryValue").Single(v => v.Attribute("Name")?.Value == "V0");
+        Assert.Equal(@"SOFTWARE\Acme", value.Attribute("Key")!.Value);
+        Assert.Equal("always32", value.Parent!.Attribute("Bitness")?.Value);
+        Assert.DoesNotContain(doc.Descendants(Ns + "RegistryValue"), v => v.Attribute("Key")!.Value.Contains("WOW6432Node", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void Generate_NeverAddsAWow6432Node_ThatTheAuthorDidNotType()
+    {
+        var keys = new[] { @"SOFTWARE\Acme", @"SOFTWARE\WOW6432Node\Acme", @"SOFTWARE\WOW6432Node\WOW6432Node\Acme", @"SOFTWARE\Classes\WOW6432Node\CLSID\{X}" };
+        var doc = WxsGenerator.Generate(ManifestWith(keys), "C:/source");
+
+        var built = doc.Descendants(Ns + "RegistryValue").Select(v => v.Attribute("Key")!.Value).ToList();
+        for (var i = 0; i < keys.Length; i++)
+        {
+            var typed = keys[i].Split('\\').Count(s => s.Equals("WOW6432Node", StringComparison.OrdinalIgnoreCase));
+            var after = built[i].Split('\\').Count(s => s.Equals("WOW6432Node", StringComparison.OrdinalIgnoreCase));
+            Assert.True(after <= typed, $"'{keys[i]}' built as '{built[i]}': it gained a WOW6432Node.");
+        }
+        // A WOW6432Node typed twice keeps exactly one: the second is the author's, not something we invent.
+        Assert.Equal(@"SOFTWARE\WOW6432Node\Acme", built[2]);
+    }
 }

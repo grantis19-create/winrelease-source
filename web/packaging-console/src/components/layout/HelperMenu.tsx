@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { useBackendStatus } from '../../state/backend'
 import { HELPER_DOWNLOAD_URL, HELPER_LATEST_VERSION, HELPER_LINK, startHelperAndWait } from '../../state/helperLinks'
 import { isUpdateAvailable } from '../../state/helperVersion'
+import { geAppSolutionsUrl } from '../../state/outbound'
 
 /**
  * "Helper & Tools" dropdown in the top bar: connection state (passive - never starts the probe itself, ADR 0070), the Helper
@@ -79,7 +80,7 @@ export function HelperMenu() {
           <Link role="menuitem" to="/settings" className={item} onClick={() => setOpen(false)}>
             <Settings size={14} /> Settings
           </Link>
-          <a role="menuitem" href="https://geappsolutions.com/" target="_blank" rel="noreferrer" className={item}>
+          <a role="menuitem" href={geAppSolutionsUrl('helper-menu')} target="_blank" rel="noreferrer" className={item}>
             <Laptop2 size={14} /> Need more than a basic MSI?
           </a>
         </div>

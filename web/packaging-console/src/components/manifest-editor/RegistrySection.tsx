@@ -10,6 +10,7 @@ import { RegistryValueModal } from './registry/RegistryValueModal'
 import { parseRegFile } from '../../state/regFileParser'
 import { unknownPropertyReferences, unknownPropertyWarning } from '../../state/msiFormatted'
 import {
+  computerPath,
   deleteRegistryKey,
   entryCountUnderTarget,
   fullRegistryKeyPath,
@@ -206,27 +207,6 @@ export function RegistrySection({
     setActiveTarget({ root: 'hkcu', keyPrefix: key })
   }
 
-  function addCustomUrlSchemePreset() {
-    const scheme = window.prompt('URL scheme (e.g. "myapp" for myapp://...)')
-    if (!scheme) return
-
-    const primaryFile = manifest.files.declared.find((f) => f.id === primaryFileId)
-    const command = primaryFile ? `"[INSTALLFOLDER]${primaryFile.installPath.split('/').pop()}" "%1"` : '"[INSTALLFOLDER]App.exe" "%1"'
-
-    onChange({
-      ...manifest,
-      registry: [
-        ...manifest.registry,
-        { root: 'hkcr', key: scheme, name: '', value: `URL:${manifest.name || scheme} Protocol`, valueType: 'string' },
-        { root: 'hkcr', key: scheme, name: 'URL Protocol', value: '', valueType: 'string' },
-        { root: 'hkcr', key: `${scheme}\\shell\\open\\command`, name: '', value: command, valueType: 'string' },
-      ],
-    })
-    // Lands on the scheme's own key (2 of the 3 new entries) rather than the nested
-    // \shell\open\command one - the more useful first stop, one click away from the other.
-    setActiveTarget({ root: 'hkcr', keyPrefix: scheme })
-  }
-
   async function importRegFile(file: File) {
     const content = await file.text()
     const { entries, warnings } = parseRegFile(content)
@@ -291,7 +271,7 @@ export function RegistrySection({
       icon={Database}
       title="Registry"
       defaultCollapsed
-      description="Keys on the left (right-click for New Key), their values on the right. Import a .reg file as it is: WOW6432Node keys become 32-bit entries by themselves."
+      description="Keys on the left (right-click for New Key), their values on the right. Import a .reg file as it is: WOW6432Node keys become 32-bit entries by themselves. In a 64-bit package the 32-bit part is the greyed WOW6432Node under HKEY_LOCAL_MACHINE\SOFTWARE: add values there for a 32-bit entry."
       actions={
         <div className="flex flex-wrap gap-2">
           <input
@@ -309,7 +289,6 @@ export function RegistrySection({
             <FileCode size={14} /> Import .reg File
           </Button>
           <Button onClick={addRunOnStartupPreset} title="Start your app automatically when someone signs in to Windows (adds an entry under the Run key).">Run on Startup</Button>
-          <Button onClick={addCustomUrlSchemePreset} title="Register your own link type, like myapp://open, so clicking such a link in a browser or email opens your app. Adds the needed keys under HKEY_CLASSES_ROOT.">Custom URL Scheme</Button>
           <Button
             variant="primary"
             onClick={() => openAddValueModal(activeTarget)}
@@ -342,6 +321,10 @@ export function RegistrySection({
           ))}
         </div>
       )}
+
+      <p className="mb-2 truncate font-mono text-xs text-muted" title="The selected key, as regedit shows it in its address bar">
+        {computerPath(activeTarget)}
+      </p>
 
       <div className="flex gap-4">
         <HiveTree

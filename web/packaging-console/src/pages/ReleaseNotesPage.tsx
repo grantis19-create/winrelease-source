@@ -4,18 +4,19 @@ import { Link } from 'react-router-dom'
 import { AppLayout } from '../components/layout/AppLayout'
 import { Panel } from '../components/ui/Panel'
 import { WhoMadeThis } from '../components/WhoMadeThis'
+import { releaseLabel, unsignedLimitation } from '../state/helperSigning'
 import { HELPER_DOWNLOAD_URL, HELPER_LATEST_VERSION, HELPER_RELEASE_DATE, HELPER_RELEASES_PAGE, HELPER_SHA256, HELPER_SIZE_LABEL } from '../state/helperLinks'
 import { NEWS, markNewsSeen } from '../state/whatsNew'
 
 /** What WinRelease deliberately does not do, or does not do yet. Keep it short and true; remove a line when it stops being so. */
-export const KNOWN_LIMITATIONS: string[] = [
+export const KNOWN_LIMITATIONS: string[] = ([
   'Windows only. Builds run in the WinRelease Helper on your own Windows PC, together with the WiX tool and the .NET SDK, which you install yourself.',
   'Aimed at simple, lightweight installers. WinRelease opens only its own project files (winrelease.json and the saved .winrelease.zip); it does not import WiX source or other packaging formats.',
-  'The Helper is an unsigned pre-release, so Windows may show an "unknown publisher" warning the first time you run it. Check the SHA-256 below against your download.',
+  unsignedLimitation(),
   'WinRelease is in beta. It is free while in beta, and may be changed, limited or withdrawn.',
   'A shortcut can use an icon file but not a numbered icon inside an .exe or .dll; it always uses the first icon.',
   'The installer\'s Repair / Remove page shows a Change button even for packages that have nothing selectable to change. It does nothing useful and is harmless.',
-]
+] as (string | null)[]).filter((line): line is string => line !== null)
 
 /** Ideas only. No dates and no promises: the page says so. Keep each line to something the owner would genuinely consider. */
 export const CONSIDERING: string[] = [
@@ -40,9 +41,9 @@ export function ReleaseNotesPage() {
         they are published; a change marked as needing a newer Helper reaches you when you run the latest download.
       </p>
 
-      <WhoMadeThis />
+      <WhoMadeThis placement="release-notes" />
 
-      <Panel icon={Download} title={`Current Helper: v${HELPER_LATEST_VERSION}`} description={`Released ${HELPER_RELEASE_DATE} (pre-release, unsigned)`}>
+      <Panel icon={Download} title={`Current Helper: v${HELPER_LATEST_VERSION}`} description={`Released ${HELPER_RELEASE_DATE} (${releaseLabel()})`}>
         <dl className="grid max-w-3xl grid-cols-[8rem_1fr] gap-x-4 gap-y-2 text-sm">
           <dt className="text-muted">Download</dt>
           <dd>

@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { AppLayout } from '../components/layout/AppLayout'
 import { Panel } from '../components/ui/Panel'
 import { analyticsEnabled } from '../state/analytics'
+import { disclaimerSigningLine } from '../state/helperSigning'
 import { SECURITY_REPORT_URL, SOURCE_REPO_URL } from '../state/supportReport'
 
 /**
@@ -90,7 +91,7 @@ const STEPS: Step[] = [
     summary: 'Settings the installer writes to the Windows registry.',
     doThis: [
       'Keys are on the left (right-click for New Key) and their values on the right. Add Entry for a value, or Import .reg File to bring in an existing export, as it is.',
-      'Use Run on Startup for a program that should start at sign-in, and Custom URL Scheme for links like myapp://.',
+      'Use Run on Startup for a program that should start at sign-in.',
     ],
     rules: [
       'HKEY_LOCAL_MACHINE needs administrator rights. In a per-user install, use HKEY_CURRENT_USER instead.',
@@ -100,6 +101,9 @@ const STEPS: Step[] = [
       'regedit shows the 32-bit part of the registry as a WOW6432Node key. In a 64-bit package, a key such as HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\YourApp is installed into that 32-bit part and carries a “32-bit” tag in the grid. In a 32-bit package every key goes to the 32-bit part anyway.',
       'Windows only redirects a few places (HKEY_LOCAL_MACHINE\\SOFTWARE and some Classes keys). A WOW6432Node key anywhere else is written exactly as you typed it and tagged “as typed”.',
       'In a 32-bit package, a key and the same key under WOW6432Node are one and the same, so list only one of them.',
+      'To write a 32-bit entry by hand in a 64-bit package, use the greyed WOW6432Node under HKEY_LOCAL_MACHINE\\SOFTWARE: right-click it and choose Add Entry Here (or New Key first). It turns normal once it holds a value. Nothing is staged under the current user, because Windows shares that part between 32-bit and 64-bit programs.',
+      'Do not type WOW6432Node twice (WOW6432Node\\WOW6432Node): Windows adds one more when it redirects, so you would end up with a doubled node. The editor flags it and a .reg import warns, but it is kept as you wrote it.',
+      'A .reg import is checked and warns about values Windows Installer cannot write (such as QWORD), a doubled WOW6432Node, a value listed twice, and a path into one user’s profile. You can still create anything by hand: the warnings are advice, not a block.',
       'Windows Installer fills in anything in square brackets when it installs: [ProductName] and [INSTALLFOLDER] work, but a name nothing sets, like [PackageName], becomes empty. The editor warns you; add the property under Advanced > Properties, or type the real text.',
       'Key names ignore capitals, as in Windows: SOFTWARE and Software are one key.',
     ],
@@ -312,7 +316,7 @@ const DISCLAIMER = [
   'WinRelease uses the WiX Toolset to build MSIs. WiX is installed separately by you and comes with its own terms: WiX v7 asks organisations that use it for revenue-generating work and have US$10,000 or more in annual revenue to pay a small monthly maintenance fee, and accepting its terms is your agreement to that (see docs.firegiant.com/wix/osmf). That fee is between you and the WiX project.',
   'WinRelease is not affiliated with, endorsed by or sponsored by WiX, FireGiant or Microsoft. Windows, Windows Installer and Intune are trademarks of Microsoft.',
   'WinRelease is in beta. It is free while in beta, and GE App Solutions may change, limit or withdraw it at any time, so keep your own copy of anything you rely on (Export saves a project file).',
-  'This is an early release. The Helper is not code-signed yet, so Windows may warn before running it: check its SHA-256 against the value shown in Settings.',
+  disclaimerSigningLine(),
   'Need more than a basic MSI, or a package reviewed for a business? Talk to GE App Solutions (geappsolutions.com).',
 ]
 

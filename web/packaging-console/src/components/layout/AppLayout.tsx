@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { geAppSolutionsUrl } from '../../state/outbound'
 import { HelperPermissionNotice } from '../HelperPermissionNotice'
 import { HelperMenu } from './HelperMenu'
 import { Sidebar } from './Sidebar'
@@ -14,7 +15,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
           {children}
           <p className="pb-2 text-xs text-muted">
             WinRelease makes basic MSI installers, free. Need more than a basic MSI?{' '}
-            <a href="https://geappsolutions.com/" target="_blank" rel="noreferrer" className="text-brand hover:underline">
+            <a href={geAppSolutionsUrl('footer')} target="_blank" rel="noreferrer" className="text-brand hover:underline">
               Talk to GE App Solutions
             </a>
             .

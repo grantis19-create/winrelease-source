@@ -1,9 +1,10 @@
-import type { RegistryRoot, WinReleaseManifest } from '../types/manifest'
+import type { PackageArchitecture, RegistryRoot, WinReleaseManifest } from '../types/manifest'
 
+/** The hives in the order regedit lists them under Computer (HKEY_CURRENT_CONFIG is shown separately, greyed: Windows Installer cannot write there). */
 export const REGISTRY_ROOTS: { root: RegistryRoot; label: string }[] = [
-  { root: 'hklm', label: 'HKEY_LOCAL_MACHINE' },
-  { root: 'hkcu', label: 'HKEY_CURRENT_USER' },
   { root: 'hkcr', label: 'HKEY_CLASSES_ROOT' },
+  { root: 'hkcu', label: 'HKEY_CURRENT_USER' },
+  { root: 'hklm', label: 'HKEY_LOCAL_MACHINE' },
   { root: 'hku', label: 'HKEY_USERS' },
 ]
 
@@ -137,4 +138,33 @@ export function entryCountUnderTarget(manifest: WinReleaseManifest, target: Acti
 export function fullRegistryKeyPath(target: ActiveRegistryTarget): string {
   const hiveLabel = REGISTRY_ROOTS.find((r) => r.root === target.root)?.label ?? target.root;
   return target.keyPrefix.length > 0 ? `${hiveLabel}\\${target.keyPrefix}` : hiveLabel;
+}
+
+/**
+ * Placeholders a 64-bit package shows so the 32-bit part of the registry is visible and reachable (ADR 0118): HKEY_LOCAL_MACHINE\SOFTWARE and, under it,
+ * WOW6432Node, greyed until something is in them. They exist only in the tree: nothing is written to the manifest, and nothing is built, until a value is
+ * added. HKEY_CURRENT_USER gets none, because Windows shares HKCU\SOFTWARE between the 32-bit and 64-bit views (a WOW6432Node key there would be a plain key
+ * no 32-bit program reads). A 32-bit package gets none either: everything in it is 32-bit already.
+ */
+export function stagedSubkeys(root: RegistryRoot, keyPrefix: string, architecture: PackageArchitecture): string[] {
+  if (architecture === 'x86' || root !== 'hklm') return [];
+  if (keyPrefix === '') return ['SOFTWARE'];
+  return sameRegistryKey(keyPrefix, 'SOFTWARE') ? ['WOW6432Node'] : [];
+}
+
+/** How many WOW6432Node segments a key path holds. More than one is almost always a mistake: Windows adds one more when it redirects. */
+export function wowNodeCount(key: string): number {
+  return key.split('\\').filter((segment) => segmentIs(segment, 'wow6432node')).length;
+}
+
+/** True for HKLM\SOFTWARE\WOW6432Node and everything under it in a 64-bit package: the 32-bit view, shown with a "32-bit" tag. */
+export function isInThirtyTwoBitView(root: RegistryRoot, key: string, architecture: PackageArchitecture): boolean {
+  if (architecture === 'x86' || root !== 'hklm') return false;
+  const segments = key.split('\\');
+  return segments.length >= 2 && segmentIs(segments[0], 'software') && segmentIs(segments[1], 'wow6432node');
+}
+
+/** The path as regedit's address bar shows it: Computer\HKEY_LOCAL_MACHINE\SOFTWARE\Vendor. */
+export function computerPath(target: ActiveRegistryTarget): string {
+  return `Computer\\${fullRegistryKeyPath(target)}`
 }

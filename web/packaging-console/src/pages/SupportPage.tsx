@@ -163,7 +163,7 @@ export function SupportPage() {
           , which only we can see.
         </p>
       </Panel>
-      <WhoMadeThis />
+      <WhoMadeThis placement="support" />
     </AppLayout>
   )
 }

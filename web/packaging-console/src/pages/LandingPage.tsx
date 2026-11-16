@@ -2,6 +2,8 @@ import { ArrowRight, Download, FileCheck2, FolderTree, Hammer, Laptop2, ShieldCh
 import { Link } from 'react-router-dom'
 import { ScreenshotGallery, type Screenshot } from '../components/ScreenshotGallery'
 import { WhoMadeThis } from '../components/WhoMadeThis'
+import { landingNote } from '../state/helperSigning'
+import { geAppSolutionsUrl } from '../state/outbound'
 import { HELPER_DOWNLOAD_URL, HELPER_LATEST_VERSION, HELPER_SIZE_LABEL } from '../state/helperLinks'
 
 /** The few numbers the page is allowed to state. They are the tested ones from Build Help > How WinRelease is tested; change them together. */
@@ -98,7 +100,7 @@ export function LandingPage() {
             </a>
           </div>
           <p className="mt-3 text-xs text-muted">
-            Windows only. Beta, free while in beta. The Helper is an unsigned pre-release; its SHA-256 is on the{' '}
+            Windows only. Beta, free while in beta. {landingNote()}{' '}
             <Link to="/release-notes" className="underline hover:text-ink">
               release notes
             </Link>
@@ -168,7 +170,7 @@ export function LandingPage() {
             <p className="text-sm text-muted">
               <span className="text-ink">Made for simple installers.</span> If you need custom actions, features, upgrades, signing, or enterprise packaging for Intune or
               ConfigMgr, that is what{' '}
-              <a href="https://geappsolutions.com/" target="_blank" rel="noreferrer" className="text-brand hover:underline">
+              <a href={geAppSolutionsUrl('landing')} target="_blank" rel="noreferrer" className="text-brand hover:underline">
                 GE App Solutions
               </a>{' '}
               does by hand.
@@ -177,7 +179,7 @@ export function LandingPage() {
         </section>
 
         <section className="py-4">
-          <WhoMadeThis />
+          <WhoMadeThis placement="landing" />
         </section>
       </main>
 
