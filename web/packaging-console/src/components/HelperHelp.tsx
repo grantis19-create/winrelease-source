@@ -70,8 +70,8 @@ export function HelperSetupPanel({ defaultCollapsed = false, forceExpanded = fal
           <CopyCommand command="dotnet tool install --global wix --version 7.0.0" />
           <p className="mt-1.5 text-xs text-muted">
             Then add the part WiX needs for the installer screens. WiX 7 refuses every command until you have accepted its terms, and the Helper&apos;s own
-            acceptance only covers what the Helper runs, so the acceptance is part of this command: organisations that use WiX for revenue-generating work and have US$10,000 or more in annual revenue are asked to sponsor the WiX
-            project (from $10 a month; smaller ones are exempt, see docs.firegiant.com/wix/osmf).
+            acceptance only covers what the Helper runs, so the acceptance is part of this command: organisations with more than US$10,000 in annual revenue (as the maintenance fee terms define it) are required to sponsor the WiX
+            project (the norm is about $10 a month; see docs.firegiant.com/wix/osmf).
           </p>
           <CopyCommand command="wix extension add --global WixToolset.UI.wixext/7.0.0 -acceptEula wix7" />
           <p className="mt-1.5 text-xs text-muted">
