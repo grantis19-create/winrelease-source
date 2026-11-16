@@ -12,6 +12,16 @@ export interface NewsEntry {
  */
 export const NEWS: NewsEntry[] = [
   {
+    id: '2026-11-16-source-and-feedback',
+    date: '16 November 2026',
+    title: 'Source open to inspection, and feedback on GitHub',
+    items: [
+      'The source code of the Helper and of this website is now published for inspection and security review. It is for reading, building and checking, not open source: you may not redistribute it or make a product from it. Build Help has an Open to inspection section, and the Helper section in Settings points to it.',
+      'Feedback & Support now goes to a public issue tracker on GitHub instead of email. Pick a topic, open the form, and optionally copy a block of details to paste in (read it first: issues are public). Security problems go through GitHub’s private report form.',
+      'The Privacy page was updated to match.',
+    ],
+  },
+  {
     id: '2026-11-16-front-page-and-privacy',
     date: '16 November 2026',
     title: 'A front page, release notes, a Privacy page and colour themes',

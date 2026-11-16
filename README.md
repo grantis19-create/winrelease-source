@@ -31,6 +31,8 @@ Every release lists a SHA-256 for `WinRelease.Helper.exe` (release notes and the
 to build the Helper yourself. A build from source is not byte-for-byte identical to the published file (the published one also embeds the build's commit and
 is built by the author's machine), but it is the same code and it passes the same tests.
 
+The site's visit-counting key is not included, so a build from source does not count visits.
+
 ## Licence
 
 Published for **inspection and security review**. Read, build and run it to verify the Helper. You may not redistribute it, sell it, or make a product from it.
