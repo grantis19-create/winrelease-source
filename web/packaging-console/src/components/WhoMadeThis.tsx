@@ -24,7 +24,7 @@ export function WhoMadeThis({ placement }: { placement: string }) {
         </p>
         <p>
           WinRelease is the simple end of that work, built so the basic MSI is quick and free. For the hard installers (no silent switch, per-user installs,
-          licensing, prerequisite chains) and for packages for Intune or ConfigMgr, that is what GE App Solutions does by hand.{' '}
+          licensing, prerequisite chains) and for packages for Intune or ConfigMgr, that is what GE App Solutions does by hand. You can also find me on{' '}
           <a className="text-brand hover:underline" href="https://www.linkedin.com/in/gelongworth/" target="_blank" rel="noreferrer">
             LinkedIn
           </a>

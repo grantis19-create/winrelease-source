@@ -37,7 +37,7 @@ export function disclaimerSigningLine(s: SigningState = signingNow): string {
 export function unsignedLimitation(s: SigningState = signingNow): string | null {
   return s.signed
     ? null
-    : 'The Helper is an unsigned pre-release, so Windows may show an "unknown publisher" warning the first time you run it. Check the SHA-256 below against your download.'
+    : 'The Helper is an unsigned pre-release, so Windows may show an "unknown publisher" warning the first time you run it. Check the SHA-256 in the card above against your download.'
 }
 
 /** Release notes: the download card's subtitle after the date. */
