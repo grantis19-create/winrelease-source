@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/WinRelease.Core/WinRelease.Core.csproj" />
+    <Project Path="src/WinRelease.Core.Tests/WinRelease.Core.Tests.csproj" />
+    <Project Path="src/WinRelease.Helper/WinRelease.Helper.csproj" />
+    <Project Path="src/WinRelease.Helper.Tests/WinRelease.Helper.Tests.csproj" />
+  </Folder>
+</Solution>

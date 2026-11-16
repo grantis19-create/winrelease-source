@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <NoWarn>$(NoWarn);CA1416</NoWarn>
+    <ApplicationIcon>winrelease.ico</ApplicationIcon>
+    <Product>WinRelease Helper</Product>
+    <Company>GE App Solutions</Company>
+    <Copyright>(c) GE App Solutions. All rights reserved.</Copyright>
+    <FileVersion>0.1.14</FileVersion>
+    <Version>0.1.14</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\WinRelease.Core\WinRelease.Core.csproj" />
+  </ItemGroup>
+
+  <!-- ADR 0102: the released exe is windowless (tray icon + log file). Debug keeps the console for development and the tests. -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <OutputType>WinExe</OutputType>
+    <DefineConstants>$(DefineConstants);HELPER_TRAY</DefineConstants>
+    <!-- Halves the self-contained single-file download (95.8 MB -> 46.6 MB, measured 2026-10-28; startup unchanged at ~2.3s). Only applies
+         to a PublishSingleFile publish. Trimming was also tried: 17.7 MB, but every API call then fails with 500 because System.Text.Json
+         needs reflection metadata the trimmer removes - do not add PublishTrimmed without moving to JSON source generation first. -->
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+  </PropertyGroup>
+
+</Project>

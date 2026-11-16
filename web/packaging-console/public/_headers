@@ -1,0 +1,9 @@
+# Security headers for the free site (ADR 0105). The Helper trusts this site's origin, so a script injected here could drive it:
+# keep scripts to our own files, allow talking only to ourselves and a Helper on this PC, and refuse framing.
+# One exception (ADR 0116): Cloudflare's visitor counter script and its report address. Deploy this file only with VITE_CF_BEACON_TOKEN set.
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://cloudflareinsights.com http://127.0.0.1:* http://localhost:*; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
+  Strict-Transport-Security: max-age=31536000

@@ -1,0 +1,70 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-canvas: #0b0c0f;
+  --color-panel: #16171d;
+  --color-panel-alt: #1c1e26;
+  --color-subtle: #2a2c36;
+  --color-ink: #e5e7eb;
+  --color-muted: #8b8d98;
+  --color-brand: #f97316;
+  --color-brand-hover: #fb923c;
+  --color-ok: #4ade80;
+  --color-warn: #f4b740;
+  --color-danger: #f87171;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+/* Themes (state/theme.ts sets data-theme on <html>; Orange is the default, no attribute). Tailwind reads these as
+   var(--color-*), so overriding the variables reaches every class. Green and Blue tint the dark base toward the
+   accent, like a phosphor screen; Mono drops the colour altogether. */
+:root[data-theme='green'] {
+  --color-canvas: #080d0a;
+  --color-panel: #0f1813;
+  --color-panel-alt: #15211a;
+  --color-subtle: #22352a;
+  --color-ink: #d7f0df;
+  --color-muted: #7fa38a;
+  --color-brand: #4ade80;
+  --color-brand-hover: #86efac;
+  --color-ok: #bef264;
+}
+
+:root[data-theme='blue'] {
+  --color-canvas: #080b10;
+  --color-panel: #0f1520;
+  --color-panel-alt: #151d2c;
+  --color-subtle: #243046;
+  --color-ink: #dbe7f7;
+  --color-muted: #7f93b0;
+  --color-brand: #60a5fa;
+  --color-brand-hover: #93c5fd;
+  --color-ok: #4ade80;
+}
+
+:root[data-theme='mono'] {
+  --color-canvas: #0a0a0a;
+  --color-panel: #151515;
+  --color-panel-alt: #1d1d1d;
+  --color-subtle: #2e2e2e;
+  --color-ink: #e8e8e8;
+  --color-muted: #8f8f8f;
+  --color-brand: #e8e8e8;
+  --color-brand-hover: #ffffff;
+  --color-ok: #4ade80;
+}
+
+body {
+  margin: 0;
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+}
+
+code,
+pre {
+  font-family: ui-monospace, Consolas, monospace;
+}

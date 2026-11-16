@@ -1,0 +1,38 @@
+## .NET / C#
+bin/
+obj/
+*.user
+*.suo
+
+## Node
+node_modules/
+dist/
+dist-mvp/
+npm-debug.log*
+
+## PowerShell / Pode
+*.log
+/data/
+
+## Azure / local secrets
+local.settings.json
+*.env
+.env.*
+!.env.mvp
+
+## OS / editor
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
+
+## Claude Code - personal/machine-local, not project content
+.claude/settings.local.json
+.agents/
+
+## Netlify CLI - local site-link state, machine/account-specific
+.netlify/
+
+## Playwright (T9)
+test-results/
+playwright-report/
