@@ -2,6 +2,7 @@ import { ArrowRight, Download, FileCheck2, FolderTree, Hammer, Laptop2, ShieldCh
 import { Link } from 'react-router-dom'
 import { ScreenshotGallery, type Screenshot } from '../components/ScreenshotGallery'
 import { WhoMadeThis } from '../components/WhoMadeThis'
+import { COMPANY, companyLine } from '../state/company'
 import { landingNote } from '../state/helperSigning'
 import { geAppSolutionsUrl } from '../state/outbound'
 import { HELPER_DOWNLOAD_URL, HELPER_LATEST_VERSION, HELPER_SIZE_LABEL } from '../state/helperLinks'
@@ -64,7 +65,7 @@ const STEPS = [
 export function LandingPage() {
   return (
     <div className="min-h-screen bg-canvas text-ink">
-      <header className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5">
+      <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
         <div className="flex items-center gap-2">
           <span className="flex h-6 w-6 items-center justify-center rounded-md bg-brand text-xs font-bold text-canvas">W</span>
           <span className="text-sm font-semibold">WinRelease.io</span>
@@ -83,15 +84,15 @@ export function LandingPage() {
         </nav>
       </header>
 
-      <main className="mx-auto max-w-5xl px-6 pb-16">
+      <main className="mx-auto max-w-6xl px-6 pb-16">
         <section className="py-12 sm:py-16">
           <p className="text-xs font-semibold uppercase tracking-widest text-brand">Free MSI builder for Windows</p>
-          <h1 className="mt-3 max-w-3xl text-4xl font-semibold leading-tight sm:text-5xl">Build a basic MSI installer. Free, on your own PC.</h1>
-          <p className="mt-5 max-w-2xl text-base text-muted">
+          <h1 className="mt-3 max-w-4xl text-4xl font-semibold leading-tight sm:text-5xl">Build a basic MSI installer. Free, on your own PC.</h1>
+          <p className="mt-5 max-w-3xl text-base text-muted">
             Describe your files, shortcuts and registry entries in the browser. WinRelease builds a standard Windows Installer package with WiX on your own
             computer, so your files never leave it. Made for the simple installer you keep needing and do not want to hand-write.
           </p>
-          <div className="mt-7 flex flex-wrap items-center gap-3">
+          <div className="mt-7 hidden flex-wrap items-center gap-3 md:flex">
             <Link to="/projects" className="inline-flex items-center gap-2 rounded-md bg-brand px-5 py-2.5 text-sm font-semibold text-canvas hover:bg-brand-hover">
               Open the editor <ArrowRight size={16} />
             </Link>
@@ -99,6 +100,9 @@ export function LandingPage() {
               <Download size={16} /> Download the Helper
             </a>
           </div>
+          <p className="mt-7 rounded-lg border border-subtle bg-panel p-4 text-sm text-ink md:hidden">
+            WinRelease builds installers on a Windows PC. Open this page on your computer to get started.
+          </p>
           <p className="mt-3 text-xs text-muted">
             Windows only. Beta, free while in beta. {landingNote()}{' '}
             <Link to="/release-notes" className="underline hover:text-ink">
@@ -184,7 +188,7 @@ export function LandingPage() {
       </main>
 
       <footer className="border-t border-subtle px-6 py-6 text-center text-xs text-muted">
-        &copy; {new Date().getFullYear()} GE App Solutions. All rights reserved. WinRelease may not be copied, resold or redistributed.{' '}
+        &copy; {new Date().getFullYear()} {COMPANY.name}. All rights reserved. WinRelease may not be copied, resold or redistributed.{' '}
         <Link to="/help#disclaimer" className="underline hover:text-ink">
           Disclaimer
         </Link>
@@ -192,6 +196,7 @@ export function LandingPage() {
         <Link to="/privacy" className="underline hover:text-ink">
           Privacy
         </Link>
+        <span className="mt-1 block">{companyLine()}</span>
       </footer>
     </div>
   )

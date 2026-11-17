@@ -1,7 +1,8 @@
-import { BarChart3, Database, EyeOff, Globe, MessageSquare } from 'lucide-react'
+import { BarChart3, Building2, Database, EyeOff, Globe, MessageSquare } from 'lucide-react'
 import { AppLayout } from '../components/layout/AppLayout'
 import { Panel } from '../components/ui/Panel'
 import { analyticsEnabled } from '../state/analytics'
+import { COMPANY } from '../state/company'
 import { FEEDBACK_REPO_URL, SECURITY_REPORT_URL } from '../state/supportReport'
 
 /** What the site and the Helper do with your information. Keep it true of the released site: change it in the same deploy as any change to what is collected. */
@@ -24,6 +25,14 @@ export function PrivacyPage() {
         How WinRelease handles your information. Last updated {PRIVACY_UPDATED}. WinRelease is made by GE App Solutions. In short: your projects and files stay on
         your own computer, the site has no accounts and sets no cookies{counting ? ', and counts visits without identifying anyone' : ', and counts no visitors'}.
       </p>
+
+      <Panel icon={Building2} title="Who runs this site">
+        <p className="max-w-3xl text-sm text-ink">
+          WinRelease is run by {COMPANY.name}, a company registered in {COMPANY.registeredIn}, company number {COMPANY.number}. Registered office: {COMPANY.office}. To raise a privacy
+          question or ask about anything described here, use the feedback tracker (public) or, for anything private, GitHub&apos;s private report form (both are linked under If you give us
+          feedback, below).
+        </p>
+      </Panel>
 
       <Panel icon={EyeOff} title="What we do not collect">
         <ul className="list-disc space-y-1.5 pl-5 text-sm text-ink">

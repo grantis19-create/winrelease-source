@@ -4,8 +4,10 @@ import { Link } from 'react-router-dom'
 import { AppLayout } from '../components/layout/AppLayout'
 import { Panel } from '../components/ui/Panel'
 import { analyticsEnabled } from '../state/analytics'
+import { COMPANY } from '../state/company'
 import { disclaimerSigningLine } from '../state/helperSigning'
 import { SECURITY_REPORT_URL, SOURCE_REPO_URL } from '../state/supportReport'
+import { GoingFurtherPanels, StartHerePanels } from './HelpStartHere'
 
 /**
  * "How to build an MSI" - a walkthrough for someone who has never made one, in the order the editor's sections appear. Every rule here is a
@@ -145,7 +147,7 @@ const STEPS: Step[] = [
       'The build log shows below; the finished .msi downloads from the result list.',
     ],
     rules: [
-      'A build cannot start while something it needs is missing: no files added, or files the project names that are not attached.',
+      'A build cannot start while something it needs is missing: a project with nothing to install at all (no files, registry entries, environment variables or shortcuts), or files the project names that are not attached. A project with only registry entries, environment variables or shortcuts builds fine.',
       'Pressing Build again replaces the previous result rather than stacking copies.',
       'If a build fails, the log names the file or setting at fault. Use Feedback & Support to send it to us.',
     ],
@@ -155,7 +157,7 @@ const STEPS: Step[] = [
 const CHECKLIST = [
   'Install it on a clean Windows virtual machine, not your own PC, and check the program starts.',
   'Look for it in Settings > Apps, and uninstall it: the files and shortcuts should go.',
-  'Build a second version with a higher version number and install it over the first: it should upgrade, not install twice.',
+  'Build a second version with a higher version number and install it over the first. A pass is one entry in Settings > Apps showing the new version, not two (see “How upgrades work” above).',
   'If it must install without admin rights, test it signed in as an ordinary user.',
   'Sign the MSI before you give it to anyone outside your team (Windows warns about unsigned installers).',
 ]
@@ -166,6 +168,10 @@ const GLOSSARY: [string, string][] = [
   ['Product Version', 'The version of this release. Raise it every time you ship.'],
   ['Per-user / per-machine', 'Per-user installs for one person and need no admin rights. Per-machine installs for everyone on the PC and need an administrator.'],
   ['Harvest / imported folder', 'A whole folder added to the installer in one go, with everything inside it.'],
+  ['Product Code', 'An ID for one version of your product. Automatic by default, and different for every Product Version.'],
+  ['Package Code', 'An ID for one built MSI file. Made fresh on every build; there is nothing to set.'],
+  ['Silent install', 'An install with no windows, for scripts and deployment tools (msiexec with /qn).'],
+  ['Elevated prompt', 'A command window run as administrator. Needed to install for everyone on the PC.'],
   ['WiX', 'Microsoft’s free tool that turns the project into the MSI. The Helper runs it on your PC.'],
 ]
 
@@ -174,11 +180,20 @@ export function HelpPage() {
     <AppLayout>
       <h1 className="text-lg font-semibold text-ink">How to build an MSI</h1>
       <p className="max-w-3xl text-sm text-muted">
-        A walkthrough for your first installer. Work down the editor sections in this order; each one says what to do and the rules that matter. New to
-        this? Press <strong className="text-ink">New Project</strong> on the Projects page and follow along.
+        New to installers? Read <a href="#start" className="text-brand hover:underline">Start here</a> first, then work down the editor sections in order: each one says what to do and
+        the rules that matter. Press <strong className="text-ink">New Project</strong> on the Projects page and follow along.
       </p>
 
       <nav aria-label="On this page" className="flex flex-wrap gap-2 text-xs">
+        <a href="#start" className="rounded-md border border-subtle px-2 py-1 text-muted hover:border-brand hover:text-brand">
+          Start here
+        </a>
+        <a href="#scope" className="rounded-md border border-subtle px-2 py-1 text-muted hover:border-brand hover:text-brand">
+          What it is for
+        </a>
+        <a href="#first" className="rounded-md border border-subtle px-2 py-1 text-muted hover:border-brand hover:text-brand">
+          Your first package
+        </a>
         <a href="#before" className="rounded-md border border-subtle px-2 py-1 text-muted hover:border-brand hover:text-brand">
           Before you start
         </a>
@@ -190,10 +205,18 @@ export function HelpPage() {
         <a href="#checklist" className="rounded-md border border-subtle px-2 py-1 text-muted hover:border-brand hover:text-brand">
           Before you ship
         </a>
+        <a href="#deploy" className="rounded-md border border-subtle px-2 py-1 text-muted hover:border-brand hover:text-brand">
+          Installing on other PCs
+        </a>
+        <a href="#upgrades" className="rounded-md border border-subtle px-2 py-1 text-muted hover:border-brand hover:text-brand">
+          Upgrades
+        </a>
         <a href="#glossary" className="rounded-md border border-subtle px-2 py-1 text-muted hover:border-brand hover:text-brand">
           Words used
         </a>
       </nav>
+
+      <StartHerePanels />
 
       <Panel id="before" icon={Cog} title="Before you start">
         <ul className="list-disc space-y-1.5 pl-5 text-sm text-ink">
@@ -222,6 +245,8 @@ export function HelpPage() {
           ))}
         </ol>
       </Panel>
+
+      <GoingFurtherPanels />
 
       <Panel id="glossary" icon={BookOpen} title="Words used">
         <dl className="space-y-2 text-sm">
@@ -304,7 +329,7 @@ const TESTING = [
 
 /** Plain-words terms of use. Draft: have it read by whoever advises GE App Solutions before the product is advertised. */
 const DISCLAIMER = [
-  '© GE App Solutions. All rights reserved. You may use WinRelease free of charge to build your own MSIs; you may not copy it, resell it or offer it as your own. The MSIs you build are yours.',
+  `© ${COMPANY.name} (registered in ${COMPANY.registeredIn}, company number ${COMPANY.number}; “GE App Solutions” below). All rights reserved. You may use WinRelease free of charge to build your own MSIs; you may not copy it, resell it or offer it as your own. The MSIs you build are yours.`,
   'WinRelease is free and provided “as is”, with no warranty of any kind. GE App Solutions is not liable for loss or damage caused by using it or by any MSI it builds.',
   'WinRelease is for simple, lightweight MSIs for software you are entitled to deploy. You must not use it to build or spread malware, to hide unwanted software, or to package software you have no right to distribute. GE App Solutions does not see, review or sign the MSIs you build and is not responsible for what they contain or how they are used.',
   'Test every MSI before you deploy it: install, upgrade, repair and uninstall it on a test PC first. WinRelease builds what you describe. It does not check that your software works, that you may redistribute it, or that it is safe to deploy.',

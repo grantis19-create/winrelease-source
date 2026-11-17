@@ -68,3 +68,11 @@ code,
 pre {
   font-family: ui-monospace, Consolas, monospace;
 }
+
+/* Large monitors: Tailwind sizes are in rem, so a slightly larger root size scales text, spacing and columns together.
+   Normal size up to 2399px (1920 and 2200px wide screens look right as they are); one gentle step from 2400px (a 27-inch 2560x1440 screen). */
+@media (min-width: 2400px) {
+  html {
+    font-size: 112.5%;
+  }
+}

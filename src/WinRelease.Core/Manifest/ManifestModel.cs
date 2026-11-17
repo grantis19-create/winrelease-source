@@ -398,6 +398,15 @@ public sealed record WinReleaseManifest : IValidatableObject
                     $"{shortcutLabel}: a URL target can't contain line breaks or control characters.",
                     [nameof(Shortcuts)]);
             }
+            else if (hasPathTarget && !Compilation.UrlShortcutFile.IsUrl(shortcut.TargetPath) && !Compilation.ShortcutTarget.IsPropertyReference(shortcut.TargetPath)
+                && !Compilation.ShortcutTarget.IsAbsolutePath(shortcut.TargetPath))
+            {
+                // Anything else (a bare file name, a relative path) builds and installs but creates no shortcut: MSI reads a Target with no
+                // square brackets as a Feature name (verified with wix 7.0.0 + msiexec). Say so here instead of failing silently.
+                yield return new ValidationResult(
+                    $"{shortcutLabel}: the target '{shortcut.TargetPath}' isn't one WinRelease can use. Use a web address (https://...), a full path that starts with a drive letter or a network share, or a [Property] path such as [INSTALLFOLDER] followed by the file name.",
+                    [nameof(Shortcuts)]);
+            }
             else if (hasFileTarget && !declaredFileIds.Contains(shortcut.TargetFileId!))
             {
                 yield return new ValidationResult(

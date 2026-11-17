@@ -2,6 +2,7 @@ import { BookOpen, FolderKanban, Laptop2, LifeBuoy, LogOut, Settings, Sparkles }
 import { useEffect, useState } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { clearToken } from '../../api/authToken'
+import { COMPANY } from '../../state/company'
 import { isMvpMode } from '../../mode'
 import { useBackendStatus } from '../../state/backend'
 import { hasUnseenNews, onNewsSeenChange } from '../../state/whatsNew'
@@ -56,7 +57,7 @@ export function Sidebar() {
       <BackendIndicator />
 
       <p className="px-3 pb-2 text-[10px] leading-snug text-muted">
-        &copy; {new Date().getFullYear()} GE App Solutions. All rights reserved. WinRelease may not be copied, resold or redistributed.{' '}
+        &copy; {new Date().getFullYear()} {COMPANY.name}. All rights reserved. WinRelease may not be copied, resold or redistributed.{' '}
         <NavLink to="/help#disclaimer" className="underline hover:text-ink">
           Disclaimer
         </NavLink>

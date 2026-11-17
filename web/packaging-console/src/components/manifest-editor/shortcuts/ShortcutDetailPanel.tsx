@@ -148,7 +148,7 @@ export function ShortcutDetailPanel({
                 <button
                   type="button"
                   onClick={setCustomTarget}
-                  title="A URL, or any raw WiX Target - including a file inside an imported/harvested folder, which can't be picked from a list since its contents aren't known until build time"
+                  title="A web address, a full path to a program already on the PC (C:\Tools\app.exe), or a [Property] path such as [INSTALLFOLDER]bin\tool.exe - including a file inside an imported folder, which can't be picked from a list since its contents aren't known until build time"
                   className={`rounded-r-md px-2 py-1.5 ${usesCustomTarget ? 'bg-brand/10 text-brand' : 'text-muted hover:text-ink'}`}
                 >
                   Custom
@@ -158,7 +158,7 @@ export function ShortcutDetailPanel({
                 <input
                   value={shortcut.targetPath ?? ''}
                   onChange={(e) => update({ targetPath: e.target.value })}
-                  placeholder="https://example.com or [INSTALLFOLDER]bin\tool.exe"
+                  placeholder="https://example.com, C:\Tools\app.exe or [INSTALLFOLDER]bin\tool.exe"
                   autoComplete={NO_AUTOFILL}
                   className={`min-w-0 flex-1 rounded-md border bg-panel px-2.5 py-1.5 text-sm outline-none focus:border-brand disabled:opacity-60 ${
                     missingCustomTarget ? 'border-danger text-danger' : 'border-subtle text-ink'

@@ -530,6 +530,57 @@ public class WxsGeneratorTests
     }
 
     /// <summary>
+    /// A literal path as a Target builds and installs but creates no shortcut: MSI reads a Target with no square brackets as a Feature
+    /// name (verified with wix 7.0.0 + msiexec). The path goes into a private Property and the Shortcut points at [Property].
+    /// </summary>
+    [Fact]
+    public void Generate_ShortcutWithLiteralPath_UsesAPrivatePropertyReference()
+    {
+        var manifest = BaseManifest(
+            shortcuts: [new Shortcut { Name = "Notepad", TargetPath = @"C:\Windows\System32\notepad.exe", Location = ShortcutLocation.DesktopFolder }]);
+
+        var doc = WxsGenerator.Generate(manifest, "C:/source");
+
+        var shortcut = doc.Descendants(Ns + "Shortcut").Single();
+        var target = shortcut.Attribute("Target")!.Value;
+        Assert.StartsWith("[ShortcutTarget_", target);
+        Assert.EndsWith("]", target);
+
+        var propertyId = target.Trim('[', ']');
+        var property = doc.Descendants(Ns + "Property").Single(p => p.Attribute("Id")!.Value == propertyId);
+        Assert.Equal(@"C:\Windows\System32\notepad.exe", property.Attribute("Value")!.Value);
+        // Not all upper case: an upper-case Property is public, and msiexec's command line could override it.
+        Assert.NotEqual(propertyId.ToUpperInvariant(), propertyId);
+    }
+
+    [Fact]
+    public void Generate_TwoShortcutsToTheSameLiteralPath_ShareOneProperty()
+    {
+        var manifest = BaseManifest(
+            shortcuts:
+            [
+                new Shortcut { Name = "Notepad", TargetPath = @"C:\Windows\System32\notepad.exe", Location = ShortcutLocation.DesktopFolder },
+                new Shortcut { Name = "Notepad menu", TargetPath = @"C:\Windows\System32\notepad.exe", Location = ShortcutLocation.ProgramMenuFolder },
+            ]);
+
+        var doc = WxsGenerator.Generate(manifest, "C:/source");
+
+        Assert.Equal(2, doc.Descendants(Ns + "Shortcut").Count());
+        Assert.Single(doc.Descendants(Ns + "Property"), p => p.Attribute("Id")!.Value.StartsWith("ShortcutTarget_"));
+    }
+
+    [Fact]
+    public void Generate_ShortcutWithPropertyTarget_AddsNoExtraProperty()
+    {
+        var manifest = BaseManifest(
+            shortcuts: [new Shortcut { Name = "Docs", TargetPath = "[INSTALLFOLDER]docs\readme.txt", Location = ShortcutLocation.DesktopFolder }]);
+
+        var doc = WxsGenerator.Generate(manifest, "C:/source");
+
+        Assert.DoesNotContain(doc.Descendants(Ns + "Property"), p => p.Attribute("Id")!.Value.StartsWith("ShortcutTarget_"));
+    }
+
+    /// <summary>
     /// A real bug this caught: two shortcuts to the same file in the same location (e.g. two Start
     /// Menu entries for the same .exe with different Arguments) seeded their Shortcut Id and Icon Id
     /// from target+location alone - identical for both, so wix rejected the second with WIX0091

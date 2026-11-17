@@ -260,8 +260,15 @@ export function GeneralSection({
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <GuidField
               label="Product Code"
-              hint="Identifies this exact version for Windows Installer. Left alone, WinRelease derives a different one for every Product Version, so upgrades just work. If you set your own (the wand or a pasted GUID), it is yours to manage: change it by hand for every new Product Version - a new version that reuses the same Product Code is treated as a repair of the installed one, not an upgrade. WinRelease never changes it for you."
+              hint="Identifies this exact version for Windows Installer. Left alone, WinRelease derives a different one for every Product Version, so upgrades just work. If you set your own (the wand or a pasted GUID), it is yours to manage: use a different Product Code for every new Product Version. A new version that reuses the same Product Code is refused by Windows (“another version of this product is already installed”), not installed as an upgrade. WinRelease never changes it for you."
               value={productCodeShown}
+              badge={
+                manifest.productCode ? (
+                  <span className="rounded border border-warn px-1 text-[10px] font-semibold uppercase tracking-wide text-warn" title="You set this Product Code yourself; WinRelease will not change it when the Product Version changes.">
+                    Pinned
+                  </span>
+                ) : undefined
+              }
               onCommit={(guid) => onChange({ ...manifest, productCode: guid })}
               actions={
                 <button type="button" onClick={generateNewProductCode} title="Generate a new random Product Code" className="text-muted hover:text-brand">
@@ -282,6 +289,16 @@ export function GeneralSection({
               }
             />
           </div>
+          {manifest.productCode && (
+            <p role="note" className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-warn">
+              <span>
+                This Product Code is pinned. If you release a new Product Version with the same Product Code, Windows refuses it (“another version of this product is already installed”) instead of upgrading. Use a new Product Code for each version.
+              </span>
+              <button type="button" onClick={() => onChange({ ...manifest, productCode: null })} className="font-medium text-brand hover:underline">
+                Back to automatic
+              </button>
+            </p>
+          )}
         </div>
 
         <div>

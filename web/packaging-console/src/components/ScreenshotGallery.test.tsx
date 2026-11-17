@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { ScreenshotGallery } from './ScreenshotGallery'
 
@@ -26,6 +26,24 @@ describe('ScreenshotGallery', () => {
     render(<ScreenshotGallery shots={shots} />)
     fireEvent.click(screen.getByRole('button', { name: 'Enlarge: Second screen' }))
     fireEvent.click(screen.getByRole('button', { name: 'Close' }))
+    expect(screen.queryByRole('dialog')).toBeNull()
+  })
+
+  it('shows a visible Enlarge button on each screen and a visible Close button in the popout', () => {
+    render(<ScreenshotGallery shots={shots} />)
+    expect(screen.getAllByText('Enlarge')).toHaveLength(2)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Enlarge: First screen' }))
+    expect(screen.getByRole('button', { name: 'Close' }).textContent).toContain('Close')
+  })
+
+  it('closes when the dimmed area around the popout is clicked, but not when the popout itself is', () => {
+    render(<ScreenshotGallery shots={shots} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Enlarge: First screen' }))
+    fireEvent.click(within(screen.getByRole('dialog')).getByAltText('First screen'))
+    expect(screen.getByRole('dialog')).toBeTruthy()
+
+    fireEvent.click(screen.getByRole('dialog'))
     expect(screen.queryByRole('dialog')).toBeNull()
   })
 })

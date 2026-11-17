@@ -12,6 +12,27 @@ export interface NewsEntry {
  */
 export const NEWS: NewsEntry[] = [
   {
+    id: '2026-11-17-helper-0.1.15',
+    date: '17 November 2026',
+    title: 'Helper v0.1.15: shortcuts to programs already on the PC; a new Start here in Build Help',
+    items: [
+      'A shortcut to a program that is already on the PC now works when you type its full path (for example C:\\Windows\\System32\\notepad.exe) in the Custom target. Before, the package built and installed but made no shortcut. (Helper v0.1.15.)',
+      'A shortcut target Windows cannot use, such as a bare file name or a relative path, is now refused with a message that says what to use instead, instead of building a package that silently makes nothing. (Helper v0.1.15.)',
+      'Build Help starts with a new Start here section for anyone moving from copying files to building an installer: what an installer does, what WinRelease is and is not for, a worked first package, how to install the result on other PCs, and how upgrades work.',
+      'A Product Code you set by hand now shows a Pinned tag and a warning, with a Back to automatic button, because a new version with the same Product Code is refused by Windows instead of upgrading.',
+      'The screenshots on the front page have an Enlarge button and a pop-out with a Close button.',
+    ],
+  },
+  {
+    id: '2026-11-16-company-details',
+    date: '16 November 2026',
+    title: 'Company details, and the WiX fee wording',
+    items: [
+      'The site now states who runs it: GE App Solutions Limited, registered in England and Wales, company number 16317660, with its registered office. It is on the front page footer, the Privacy page and the Disclaimer.',
+      'The Disclaimer and the setup guide now say it the way WiX does: organisations with more than US$10,000 in annual revenue are required to sponsor the WiX project.',
+    ],
+  },
+  {
     id: '2026-11-16-registry-layout',
     date: '16 November 2026',
     title: 'Registry: laid out like regedit, and the Custom URL Scheme button is gone',

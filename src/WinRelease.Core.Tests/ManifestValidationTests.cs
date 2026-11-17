@@ -49,6 +49,34 @@ public class ManifestValidationTests
         Assert.Empty(Validate(manifest));
     }
 
+    [Theory]
+    [InlineData(@"C:\Tools\app.exe")]
+    [InlineData(@"c:/Tools/app.exe")]
+    [InlineData(@"\\server\share\tool.exe")]
+    [InlineData("[INSTALLFOLDER]bin\tool.exe")]
+    [InlineData("[System64Folder]notepad.exe")]
+    [InlineData("https://example.com/docs")]
+    public void Shortcut_TargetPath_AcceptedForms_AreValid(string target)
+    {
+        var manifest = BaseManifest([new Shortcut { Name = "Tool", TargetPath = target, Location = ShortcutLocation.DesktopFolder }]);
+
+        Assert.Empty(Validate(manifest));
+    }
+
+    /// <summary>A bare file name or a relative path builds and installs but makes no shortcut (MSI reads a Target with no brackets as a Feature name), so it is refused up front.</summary>
+    [Theory]
+    [InlineData("notepad.exe")]
+    [InlineData(@"tools\app.exe")]
+    [InlineData("INSTALLFOLDER")]
+    public void Shortcut_TargetPath_BareNameOrRelativePath_IsInvalid(string target)
+    {
+        var manifest = BaseManifest([new Shortcut { Name = "Tool", TargetPath = target, Location = ShortcutLocation.DesktopFolder }]);
+
+        var errors = Validate(manifest).ToList();
+
+        Assert.Contains(errors, e => e.ErrorMessage!.Contains("isn't one WinRelease can use"));
+    }
+
     /// <summary>ADR 0094: non-standard versions are allowed (wix builds them, warning WIX1148); only an empty one is rejected. The range check is advice, not a rule.</summary>
     [Theory]
     [InlineData("1.0.0", true)]

@@ -259,7 +259,8 @@ public static class WxsGenerator
             shortcutOnlyComponents.Add(profileCleanup);
         }
 
-        var icons = AttachShortcuts(manifest, sourceRoot, generatedRoot ?? Path.Combine(sourceRoot, ".winrelease-generated"), declaredFileElements, shortcutOnlyComponents);
+        var shortcutTargetProperties = new List<XElement>();
+        var icons = AttachShortcuts(manifest, sourceRoot, generatedRoot ?? Path.Combine(sourceRoot, ".winrelease-generated"), declaredFileElements, shortcutOnlyComponents, shortcutTargetProperties);
 
         var arpProperties = BuildArpProperties(manifest.AppInfo);
         var (arpIcon, arpIconProperty) = BuildArpIcon(manifest, sourceRoot, generatedRoot ?? Path.Combine(sourceRoot, ".winrelease-generated"));
@@ -330,6 +331,7 @@ public static class WxsGenerator
             arpProperties,
             // ADR 0053: curated install-behavior properties (REBOOT, MSIRESTARTMANAGERCONTROL, ...).
             manifest.Properties.Select(p => new XElement(Namespace + "Property", new XAttribute("Id", p.Id), new XAttribute("Value", p.Value))),
+            shortcutTargetProperties,
             standardDirectories,
             icons,
             registryComponents,
@@ -721,7 +723,7 @@ public static class WxsGenerator
     /// so it needs its own Component (and KeyPath) to be installed/removed at all.
     /// </param>
     private static List<XElement> AttachShortcuts(
-        WinReleaseManifest manifest, string sourceRoot, string generatedRoot, Dictionary<string, XElement> declaredFileElements, List<XElement> shortcutOnlyComponents)
+        WinReleaseManifest manifest, string sourceRoot, string generatedRoot, Dictionary<string, XElement> declaredFileElements, List<XElement> shortcutOnlyComponents, List<XElement> shortcutTargetProperties)
     {
         var icons = new List<XElement>();
         // Every Id/Guid below is seeded from idSeed+directoryId alone - two shortcuts that
@@ -827,7 +829,22 @@ public static class WxsGenerator
                 // Folder WiX can't know about until it scans the folder at build time) - the
                 // Target is explicit, and the Shortcut needs its own Component to belong to.
                 // idSeed == shortcut.TargetPath in this branch (validated non-empty by WinReleaseManifest.Validate()).
-                shortcutElement.Add(new XAttribute("Target", idSeed));
+                // A literal path (C:\Tools\app.exe) can't be a Target as typed: MSI reads a Target with no square
+                // brackets as a Feature name, finds none, and CreateShortcuts silently makes nothing (verified with wix 7.0.0 + msiexec: build
+                // and install both succeed). A [Property] reference is formatted as a path, so the path goes into a private Property.
+                var target = idSeed;
+                if (ShortcutTarget.IsAbsolutePath(idSeed))
+                {
+                    var propertyId = ShortcutTarget.PropertyIdFor(manifest.UpgradeCode, idSeed);
+                    if (shortcutTargetProperties.All(p => p.Attribute("Id")!.Value != propertyId))
+                    {
+                        shortcutTargetProperties.Add(new XElement(Namespace + "Property", new XAttribute("Id", propertyId), new XAttribute("Value", idSeed)));
+                    }
+
+                    target = $"[{propertyId}]";
+                }
+
+                shortcutElement.Add(new XAttribute("Target", target));
                 shortcutOnlyComponents.Add(BuildShortcutOnlyComponent(manifest.UpgradeCode, uniqueSeed, shortcut.Location, shortcutElement, UserProfileCleanupFolders(manifest.UpgradeCode, EffectiveShortcutLocation(shortcut.Location))));
             }
         }
