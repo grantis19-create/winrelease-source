@@ -12,6 +12,17 @@ export interface NewsEntry {
  */
 export const NEWS: NewsEntry[] = [
   {
+    id: '2026-11-17-helper-0.1.16',
+    date: '17 November 2026',
+    title: 'Helper v0.1.16: System32 paths install where you typed them; a tidier Helper menu; a fuller sample',
+    items: [
+      'In a 64-bit package, a pasted System32 path now installs into the real System32 folder. Before, it went into SysWOW64 (the 32-bit system folder). A SysWOW64 path is now recognised too. 32-bit packages are unchanged. (Helper v0.1.16.)',
+      'The Install Directory preview now shows SysWOW64 for the 32-bit system folder in 32-bit packages as well, which is where Windows puts it on a 64-bit PC. (Helper v0.1.16.)',
+      'The Helper & Tools menu no longer hides behind the editor’s Build MSI bar, and it now lists only the connection status, an update notice, Download or Start the Helper, and one link to the Helper help.',
+      'The sample project now shows both sides of a 64-bit package: registry values in the 64-bit and the 32-bit view, and a second text file in the 32-bit Program Files folder. All of it is removed on uninstall.',
+    ],
+  },
+  {
     id: '2026-11-17-helper-0.1.15',
     date: '17 November 2026',
     title: 'Helper v0.1.15: shortcuts to programs already on the PC; a new Start here in Build Help',

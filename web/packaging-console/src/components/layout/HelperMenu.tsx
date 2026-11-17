@@ -1,14 +1,13 @@
-import { BookOpen, ChevronDown, Download, Laptop2, Play, Settings, ShieldCheck, Wrench } from 'lucide-react'
+import { BookOpen, ChevronDown, Download, Play } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useBackendStatus } from '../../state/backend'
 import { HELPER_DOWNLOAD_URL, HELPER_LATEST_VERSION, HELPER_LINK, startHelperAndWait } from '../../state/helperLinks'
 import { isUpdateAvailable } from '../../state/helperVersion'
-import { geAppSolutionsUrl } from '../../state/outbound'
 
 /**
- * "Helper & Tools" dropdown in the top bar: connection state (passive - never starts the probe itself, ADR 0070), the Helper
- * download, the setup guide and the settings. Closes on outside click or Escape.
+ * "Helper & Tools" dropdown in the top bar: connection state (passive - never starts the probe itself, ADR 0070), the update notice, the Helper
+ * download or start, and one link to the Helper help in Settings. Everything else it used to list is reachable from Settings or the page footer. Closes on outside click or Escape.
  */
 export function HelperMenu() {
   const [open, setOpen] = useState(false)
@@ -31,8 +30,9 @@ export function HelperMenu() {
 
   const item = 'flex items-center gap-2 px-3 py-2 text-sm text-ink hover:bg-panel-alt'
 
+  // z-30 gives the whole menu its own layer above the editor's sticky action bar (z-20, later in the page), which otherwise painted over the open menu.
   return (
-    <div ref={ref} className="relative self-end">
+    <div ref={ref} className="relative z-30 self-end">
       <button
         type="button"
         aria-haspopup="menu"
@@ -69,20 +69,8 @@ export function HelperMenu() {
             </a>
           )}
           <Link role="menuitem" to="/settings#quick-start" className={item} onClick={() => setOpen(false)}>
-            <BookOpen size={14} /> Quick-start guide
+            <BookOpen size={14} /> Helper help and settings
           </Link>
-          <Link role="menuitem" to="/settings#about" className={item} onClick={() => setOpen(false)}>
-            <ShieldCheck size={14} /> What is the Helper?
-          </Link>
-          <Link role="menuitem" to="/settings#troubleshooting" className={item} onClick={() => setOpen(false)}>
-            <Wrench size={14} /> Troubleshooting
-          </Link>
-          <Link role="menuitem" to="/settings" className={item} onClick={() => setOpen(false)}>
-            <Settings size={14} /> Settings
-          </Link>
-          <a role="menuitem" href={geAppSolutionsUrl('helper-menu')} target="_blank" rel="noreferrer" className={item}>
-            <Laptop2 size={14} /> Need more than a basic MSI?
-          </a>
         </div>
       )}
     </div>

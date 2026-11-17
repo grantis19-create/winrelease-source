@@ -596,7 +596,7 @@ public sealed record QuitRequest(string? Version);
 /// </summary>
 public static class HelperVersion
 {
-    public const string Current = "0.1.15";
+    public const string Current = "0.1.16";
 }
 
 /// <summary>

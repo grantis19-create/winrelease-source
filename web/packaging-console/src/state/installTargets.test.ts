@@ -283,9 +283,9 @@ describe('resolvedPathPreview', () => {
     expect(resolvedPathPreview(x64, { root: 'system64Folder', prefix: '' })).toBe('C:\\Windows\\System32\\')
   })
 
-  it('SystemFolder resolves to the real System32 on an x86 build - nothing 64-bit to be redirected away from', () => {
+  it('SystemFolder is SysWOW64 on an x86 build too - on 64-bit Windows it is the 32-bit system folder whatever the package bitness (checked against a real x86 build)', () => {
     const x86 = { ...manifestWith([]), architecture: 'x86' as const }
-    expect(resolvedPathPreview(x86, { root: 'systemFolder', prefix: '' })).toBe('C:\\Windows\\System32\\')
+    expect(resolvedPathPreview(x86, { root: 'systemFolder', prefix: '' })).toBe('C:\\Windows\\SysWOW64\\')
   })
 })
 
@@ -459,5 +459,34 @@ describe('imported (harvest) folders are browsable (ADR 0097)', () => {
 
   it('still counts an imported folder as non-empty when its files are not loaded', () => {
     expect(itemCountUnderTargetWithHarvest(manifest, [], { root: 'installFolder', prefix: 'test/Downloads' })).toBe(1)
+  })
+})
+
+describe('Windows system folders in a literal Target Directory (mirrors TargetDirectoryResolver)', () => {
+  it('maps System32 to System64Folder in a 64-bit package, because [SystemFolder] would land in SysWOW64', () => {
+    expect(parseTargetDirectory('C:\\Windows\\System32\\Acme')).toEqual({ rootId: 'System64Folder', segments: ['Acme'] })
+    expect(parseTargetDirectory('C:\\Windows\\System32\\Acme', 'x64')).toEqual({ rootId: 'System64Folder', segments: ['Acme'] })
+    expect(parseTargetDirectory('C:\\Windows\\System32\\Acme', 'arm64')).toEqual({ rootId: 'System64Folder', segments: ['Acme'] })
+    expect(parseTargetDirectory('c:\\windows\\system32\\Acme\\Sub', 'x64')).toEqual({ rootId: 'System64Folder', segments: ['Acme', 'Sub'] })
+  })
+
+  it('maps System32 to SystemFolder in a 32-bit package, where it is what a 32-bit program sees', () => {
+    expect(parseTargetDirectory('C:\\Windows\\System32\\Acme', 'x86')).toEqual({ rootId: 'SystemFolder', segments: ['Acme'] })
+  })
+
+  it('maps SysWOW64 to SystemFolder in every package', () => {
+    for (const architecture of ['x64', 'x86', 'arm64'] as const) {
+      expect(parseTargetDirectory('C:\\Windows\\SysWOW64\\Acme', architecture)).toEqual({ rootId: 'SystemFolder', segments: ['Acme'] })
+    }
+  })
+
+  it('never remaps a bracketed token by architecture', () => {
+    expect(parseTargetDirectory('[SystemFolder]Acme', 'x64')).toEqual({ rootId: 'SystemFolder', segments: ['Acme'] })
+    expect(parseTargetDirectory('[System64Folder]Acme', 'x86')).toEqual({ rootId: 'System64Folder', segments: ['Acme'] })
+  })
+
+  it('rewrites a pasted System32 path to the right token as you type', () => {
+    expect(normalizeTargetDirectoryToken('C:\\Windows\\System32\\Acme', 'x64')).toBe('[System64Folder]Acme')
+    expect(normalizeTargetDirectoryToken('C:\\Windows\\System32\\Acme', 'x86')).toBe('[SystemFolder]Acme')
   })
 })

@@ -32,11 +32,13 @@ public static class TargetDirectoryResolver
         (@"C:\Program Files\Common Files\", "CommonFiles64Folder"),
         (@"C:\Program Files (x86)\", "ProgramFilesFolder"),
         (@"C:\Program Files\", "ProgramFiles64Folder"),
-        (@"C:\Windows\System32\", "SystemFolder"),
         (@"C:\ProgramData\", "CommonAppDataFolder"),
     ];
 
-    public static bool TryParse(string? raw, out string rootId, out string[] segments)
+    private const string System32Prefix = @"C:\Windows\System32\";
+    private const string SysWow64Prefix = @"C:\Windows\SysWOW64\";
+
+    public static bool TryParse(string? raw, out string rootId, out string[] segments, PackageArchitecture architecture = PackageArchitecture.X64)
     {
         rootId = "";
         segments = [];
@@ -64,6 +66,24 @@ public static class TargetDirectoryResolver
 
             rootId = token;
             segments = SplitSegments(trimmed[(closeIndex + 1)..]);
+            return true;
+        }
+
+        // The Windows system folders depend on the package's bitness. In a 64-bit package, a person who types C:\Windows\System32 means the real
+        // System32, which is System64Folder: [SystemFolder] is the 32-bit system folder and resolves to SysWOW64 on 64-bit Windows (verified with a real
+        // build and the Windows Installer API). In a 32-bit package, System32 is what a 32-bit program sees, which is SystemFolder. SysWOW64 is always
+        // the 32-bit system folder.
+        if (trimmed.StartsWith(System32Prefix, StringComparison.OrdinalIgnoreCase))
+        {
+            rootId = architecture == PackageArchitecture.X86 ? "SystemFolder" : "System64Folder";
+            segments = SplitSegments(trimmed[System32Prefix.Length..]);
+            return true;
+        }
+
+        if (trimmed.StartsWith(SysWow64Prefix, StringComparison.OrdinalIgnoreCase))
+        {
+            rootId = "SystemFolder";
+            segments = SplitSegments(trimmed[SysWow64Prefix.Length..]);
             return true;
         }
 
@@ -102,7 +122,7 @@ public static class TargetDirectoryResolver
         "ProgramFilesFolder" => @"C:\Program Files (x86)",
         "CommonFiles64Folder" => @"C:\Program Files\Common Files",
         "CommonFilesFolder" => @"C:\Program Files (x86)\Common Files",
-        "SystemFolder" => @"C:\Windows\System32",
+        "SystemFolder" => @"C:\Windows\SysWOW64",
         "System64Folder" => @"C:\Windows\System32",
         "AppDataFolder" => @"C:\Users\<installing user>\AppData\Roaming",
         "LocalAppDataFolder" => @"C:\Users\<installing user>\AppData\Local",

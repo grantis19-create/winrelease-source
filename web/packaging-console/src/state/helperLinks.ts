@@ -3,7 +3,7 @@ import { resetResolvedBackend, resolveBackend } from './backend'
 const RELEASES_REPO = 'https://github.com/grantis19-create/winrelease-releases'
 
 /** The Helper release this site build points at. Bump with each Helper release (ADR 0104). */
-export const HELPER_LATEST_VERSION = '0.1.15'
+export const HELPER_LATEST_VERSION = '0.1.16'
 
 /**
  * Whether the released Helper is code-signed, and the publisher name in its certificate (the company's legal name). Flip both in the same commit
@@ -13,7 +13,7 @@ export const HELPER_IS_SIGNED = false
 export const HELPER_PUBLISHER = ''
 
 /** SHA-256 of that release's WinRelease.Helper.exe, so a user can check what they downloaded. Bump with the version; check-release-alignment.ps1 compares it to the release notes. */
-export const HELPER_SHA256 = '125ffa9280be04dc479a8194c55bf9551c041ff9e9d68214f377c0b97a4064dc'
+export const HELPER_SHA256 = '3304b8347adffddd8f2b58c0befa4242baeae7d4561f8e229c82f3dbcd250f15'
 
 /** Release date and size shown on the Release notes page. Bump with the version (the alignment check does not compare these two). */
 export const HELPER_RELEASE_DATE = '17 November 2026'

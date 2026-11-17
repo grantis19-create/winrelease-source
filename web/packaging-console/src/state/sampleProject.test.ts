@@ -11,7 +11,7 @@ describe('createSampleProject', () => {
     for (const declared of manifest.files.declared) expect(staged).toContain(declared.sourcePath)
   })
 
-  it('is a 64-bit package: one text file, one shortcut to it, and nothing in the registry', () => {
+  it('is a 64-bit package: a text file with a shortcut to it, and a second text file in the 32-bit Program Files folder', () => {
     const { manifest } = createSampleProject()
 
     expect(manifest.architecture).toBe('x64')
@@ -19,10 +19,24 @@ describe('createSampleProject', () => {
     expect(manifest.manufacturer).toBe('GE App Solutions')
     expect(manifest.targetDirectory).toBe(String.raw`[ProgramFiles64Folder]GE App Solutions\WinRelease Sample`)
     expect(manifest.targetDirectory.split('\\')).toHaveLength(2)
-    expect(manifest.files.declared).toHaveLength(1)
-    expect(manifest.registry).toHaveLength(0)
+    expect(manifest.files.declared.map((f) => f.id)).toEqual(['SampleText', 'SampleText32'])
+    expect(manifest.files.declared[1]).toMatchObject({ root: 'programFilesFolder', installPath: 'GE App Solutions/WinRelease Sample/Welcome32.txt' })
     expect(manifest.shortcuts).toHaveLength(1)
     expect(manifest.files.declared.map((f) => f.id)).toContain(manifest.shortcuts[0].targetFileId)
+  })
+
+  it('writes the same values in the 64-bit registry view and, under WOW6432Node, the 32-bit view', () => {
+    const { registry } = createSampleProject().manifest
+
+    expect(registry.every((e) => e.root === 'hklm')).toBe(true)
+    const keys64 = registry.filter((e) => e.key === String.raw`SOFTWARE\GE App Solutions\WinRelease Sample`)
+    const keys32 = registry.filter((e) => e.key === String.raw`SOFTWARE\WOW6432Node\GE App Solutions\WinRelease Sample`)
+    expect(keys64.map((e) => e.name)).toEqual(['View', 'Version', 'ShowWelcome'])
+    expect(keys32.map((e) => e.name)).toEqual(['View', 'Version'])
+    expect(keys64[0].value).toBe('64-bit')
+    expect(keys32[0].value).toBe('32-bit')
+    expect(keys64[2]).toMatchObject({ value: '1', valueType: 'integer' })
+    expect(registry).toHaveLength(keys64.length + keys32.length)
   })
 
   it('carries the WinRelease icon for both the shortcut and the Apps list, as a real .ico', async () => {

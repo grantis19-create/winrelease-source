@@ -133,7 +133,7 @@ public sealed record WinReleaseManifest : IValidatableObject
             yield return new ValidationResult("displayVersion must be 64 characters or fewer.", [nameof(DisplayVersion)]);
         }
 
-        if (TargetDirectoryResolver.TryParse(TargetDirectory, out _, out var targetSegments) && targetSegments.Select(SourcePathRules.TraversalProblem).FirstOrDefault(p => p is not null) is { } targetProblem)
+        if (TargetDirectoryResolver.TryParse(TargetDirectory, out _, out var targetSegments, Architecture) && targetSegments.Select(SourcePathRules.TraversalProblem).FirstOrDefault(p => p is not null) is { } targetProblem)
         {
             yield return new ValidationResult($"targetDirectory: {targetProblem}.", [nameof(TargetDirectory)]);
         }
@@ -338,7 +338,7 @@ public sealed record WinReleaseManifest : IValidatableObject
         // below is a different, still-necessary kind of check - not "is this a valid Windows path,"
         // but "does WxsGenerator even know which StandardDirectory to nest INSTALLFOLDER under" -
         // a structural requirement of this schema, not an extra WiX-level strictness layer.
-        if (!TargetDirectoryResolver.TryParse(TargetDirectory, out _, out _))
+        if (!TargetDirectoryResolver.TryParse(TargetDirectory, out _, out _, Architecture))
         {
             yield return new ValidationResult(
                 $"targetDirectory '{TargetDirectory}' must start with a recognized WiX folder token (e.g. [ProgramFiles64Folder]) or a literal path under Program Files/Windows System32.",
@@ -472,7 +472,7 @@ public sealed record WinReleaseManifest : IValidatableObject
                 yield return new ValidationResult($"Folder '{harvest.SourceFolder}' installs to a 64-bit folder ({harvest.Root}), but this is an x86 package. Use the 32-bit folder, or build for x64.", ["files.harvest.root"]);
             }
 
-            if (TargetDirectoryResolver.TryParse(TargetDirectory, out var targetRootId, out _) && targetRootId is "ProgramFiles64Folder" or "CommonFiles64Folder" or "System64Folder")
+            if (TargetDirectoryResolver.TryParse(TargetDirectory, out var targetRootId, out _, Architecture) && targetRootId is "ProgramFiles64Folder" or "CommonFiles64Folder" or "System64Folder")
             {
                 yield return new ValidationResult($"Target directory is under {targetRootId}, a 64-bit folder, but this is an x86 package. Use [ProgramFilesFolder], or build for x64.", [nameof(TargetDirectory)]);
             }

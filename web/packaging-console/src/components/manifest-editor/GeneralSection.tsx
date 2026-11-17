@@ -71,20 +71,20 @@ function BrowseTargetDirectoryModal({
   onClose: () => void
   onChoose: (value: string) => void
 }) {
-  const parsed = parseTargetDirectory(initial)
+  const parsed = parseTargetDirectory(initial, architecture)
   const rootOptions = visibleTargetDirectoryRoots(architecture)
   const [root, setRoot] = useState<TargetDirectoryRootId>(
     parsed && rootOptions.includes(parsed.rootId) ? parsed.rootId : rootOptions[0],
   )
   const [subpath, setSubpath] = useState(parsed?.segments.join('\\') ?? '')
-  const [localPath, setLocalPath] = useState(() => composeLocalPath(root, subpath, architecture))
+  const [localPath, setLocalPath] = useState(() => composeLocalPath(root, subpath))
   const [localPathUnrecognized, setLocalPathUnrecognized] = useState(false)
 
   /** Root/Subfolder edited directly - keep the local-path field's preview in sync with them. */
   function updateStructured(nextRoot: TargetDirectoryRootId, nextSubpath: string) {
     setRoot(nextRoot)
     setSubpath(nextSubpath)
-    setLocalPath(composeLocalPath(nextRoot, nextSubpath, architecture))
+    setLocalPath(composeLocalPath(nextRoot, nextSubpath))
     setLocalPathUnrecognized(false)
   }
 
@@ -97,7 +97,7 @@ function BrowseTargetDirectoryModal({
    */
   function updateFromLocalPath(raw: string) {
     setLocalPath(raw)
-    const parsedLocal = parseTargetDirectory(raw)
+    const parsedLocal = parseTargetDirectory(raw, architecture)
     if (!parsedLocal || !rootOptions.includes(parsedLocal.rootId)) {
       setLocalPathUnrecognized(raw.trim().length > 0)
       return
@@ -164,8 +164,8 @@ function BrowseTargetDirectoryModal({
   )
 }
 
-function composeLocalPath(root: TargetDirectoryRootId, subpath: string, architecture: PackageArchitecture): string {
-  return `${exampleBasePath(root, architecture)}${subpath.length > 0 ? `\\${subpath}` : ''}`
+function composeLocalPath(root: TargetDirectoryRootId, subpath: string): string {
+  return `${exampleBasePath(root)}${subpath.length > 0 ? `\\${subpath}` : ''}`
 }
 
 export function GeneralSection({
@@ -358,7 +358,7 @@ export function GeneralSection({
               </select>
             </Field>
           </div>
-          {parseTargetDirectory(manifest.targetDirectory)?.segments.length === 0 && (
+          {parseTargetDirectory(manifest.targetDirectory, manifest.architecture)?.segments.length === 0 && (
             <p className="mt-2 text-xs text-warn">
               Your files will be installed directly into {resolvedPathPreview(manifest, { root: 'installFolder', prefix: '' })} with nothing
               around them. Add a folder for your app, e.g. <span className="font-mono">{manifest.targetDirectory.trim()}{manifest.manufacturer.trim() || 'Acme'}\{manifest.name.trim() || 'App'}</span>.

@@ -9,8 +9,8 @@
     <Product>WinRelease Helper</Product>
     <Company>GE App Solutions</Company>
     <Copyright>(c) GE App Solutions. All rights reserved.</Copyright>
-    <FileVersion>0.1.15</FileVersion>
-    <Version>0.1.15</Version>
+    <FileVersion>0.1.16</FileVersion>
+    <Version>0.1.16</Version>
   </PropertyGroup>
 
   <ItemGroup>

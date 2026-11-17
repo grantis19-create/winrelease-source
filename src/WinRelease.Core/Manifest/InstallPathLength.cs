@@ -21,7 +21,7 @@ public static class InstallPathLength
         IEnumerable<string> segments;
         if (root == InstallRoot.InstallFolder)
         {
-            if (!TargetDirectoryResolver.TryParse(manifest.TargetDirectory, out rootId, out var targetSegments))
+            if (!TargetDirectoryResolver.TryParse(manifest.TargetDirectory, out rootId, out var targetSegments, manifest.Architecture))
             {
                 rootId = "ProgramFiles64Folder";
                 targetSegments = [];

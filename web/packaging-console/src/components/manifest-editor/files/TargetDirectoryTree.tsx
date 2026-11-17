@@ -50,7 +50,7 @@ export function TargetDirectoryTree({
   // root (e.g. Program Files (64-bit) > Sample Company > Hello Installer) rather than as a
   // duplicate top-level root. A bare root with no subpath, or an unparseable value, keeps the
   // standalone Install Directory node (visibleInstallRoots already drops the redundant raw root then).
-  const parsed = parseTargetDirectory(manifest.targetDirectory)
+  const parsed = parseTargetDirectory(manifest.targetDirectory, manifest.architecture)
   const nestRoot = parsed && parsed.segments.length > 0 ? INSTALL_ROOTS.find((r) => r.label === `[${parsed.rootId}]`)?.root : undefined
   const visible = visibleInstallRoots(manifest)
   const nestHost = nestRoot && visible.some((r) => r.root === nestRoot) ? nestRoot : undefined

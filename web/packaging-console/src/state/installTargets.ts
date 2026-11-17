@@ -50,21 +50,20 @@ const LITERAL_TARGET_DIRECTORY_PREFIXES: [string, TargetDirectoryRootId][] = [
   ['C:\\Program Files\\Common Files\\', 'CommonFiles64Folder'],
   ['C:\\Program Files (x86)\\', 'ProgramFilesFolder'],
   ['C:\\Program Files\\', 'ProgramFiles64Folder'],
-  ['C:\\Windows\\System32\\', 'SystemFolder'],
   ['C:\\ProgramData\\', 'CommonAppDataFolder'],
 ];
+
+const SYSTEM32_PREFIX = 'c:\\windows\\system32\\'
+const SYSWOW64_PREFIX = 'c:\\windows\\syswow64\\'
 
 /**
  * The real, illustrative base path a Target Directory root resolves to - preview text only, never
  * sent to the build. `<installing user>` for AppData/LocalAppData is deliberately not a real
  * username - which profile it lands in isn't knowable until install time (ADR 0033/0005's caveat).
- * `SystemFolder` needs `architecture` to resolve correctly: on a 64-bit build a 32-bit process's
- * `%WinDir%\System32` writes are transparently redirected by Windows to `%WinDir%\SysWOW64` (WOW64
- * file redirection) - `System64Folder` is the distinct, never-redirected real System32 for a 64-bit
- * component. On an x86 build there's no redirection to speak of (nothing 64-bit exists to redirect
- * away from), so `SystemFolder` resolves to the real System32 there too.
+ * `SystemFolder` is the 32-bit system folder, which on 64-bit Windows (every Windows 11 PC) is `%WinDir%\SysWOW64` whatever the package's bitness - verified
+ * by reading INSTALLFOLDER from MSIs built for x64 and x86 packages. `System64Folder` is the real `%WinDir%\System32`.
  */
-export function exampleBasePath(rootId: string, architecture: PackageArchitecture = 'x64'): string {
+export function exampleBasePath(rootId: string): string {
   switch (rootId) {
     case 'ProgramFiles64Folder':
       return 'C:\\Program Files'
@@ -75,7 +74,7 @@ export function exampleBasePath(rootId: string, architecture: PackageArchitectur
     case 'CommonFilesFolder':
       return 'C:\\Program Files (x86)\\Common Files'
     case 'SystemFolder':
-      return architecture === 'x86' ? 'C:\\Windows\\System32' : 'C:\\Windows\\SysWOW64'
+      return 'C:\\Windows\\SysWOW64'
     case 'System64Folder':
       return 'C:\\Windows\\System32'
     case 'AppDataFolder':
@@ -101,7 +100,7 @@ function splitPathSegments(rest: string): string[] {
  * WinRelease.Core.Manifest.TargetDirectoryResolver.TryParse server-side. Returns null when
  * unrecognized (surfaced as a validation error by the backend, not re-validated here).
  */
-export function parseTargetDirectory(raw: string): { rootId: TargetDirectoryRootId; segments: string[] } | null {
+export function parseTargetDirectory(raw: string, architecture: PackageArchitecture = 'x64'): { rootId: TargetDirectoryRootId; segments: string[] } | null {
   const trimmed = raw.trim()
   if (trimmed.length === 0) return null
 
@@ -111,6 +110,17 @@ export function parseTargetDirectory(raw: string): { rootId: TargetDirectoryRoot
     const token = trimmed.slice(1, closeIndex)
     if (!(TARGET_DIRECTORY_ROOTS as readonly string[]).includes(token)) return null
     return { rootId: token as TargetDirectoryRootId, segments: splitPathSegments(trimmed.slice(closeIndex + 1)) }
+  }
+
+  // The Windows system folders depend on the package's bitness (mirrors TargetDirectoryResolver.TryParse). In a 64-bit package, C:\\Windows\\System32 means the
+  // real System32, which is System64Folder; SystemFolder is the 32-bit system folder, SysWOW64 on 64-bit Windows (verified with a real build). In a 32-bit
+  // package, System32 is what a 32-bit program sees, which is SystemFolder. SysWOW64 is always SystemFolder.
+  const lowered = trimmed.toLowerCase()
+  if (lowered.startsWith(SYSTEM32_PREFIX)) {
+    return { rootId: architecture === 'x86' ? 'SystemFolder' : 'System64Folder', segments: splitPathSegments(trimmed.slice(SYSTEM32_PREFIX.length)) }
+  }
+  if (lowered.startsWith(SYSWOW64_PREFIX)) {
+    return { rootId: 'SystemFolder', segments: splitPathSegments(trimmed.slice(SYSWOW64_PREFIX.length)) }
   }
 
   for (const [prefix, rootId] of LITERAL_TARGET_DIRECTORY_PREFIXES) {
@@ -140,9 +150,9 @@ export function formatTargetDirectory(rootId: TargetDirectoryRootId, subpath: st
  * stays freeform for anything this can't confidently map, it just never *silently keeps* a
  * recognized raw path around when a real property token exists for it.
  */
-export function normalizeTargetDirectoryToken(raw: string): string {
+export function normalizeTargetDirectoryToken(raw: string, architecture: PackageArchitecture = 'x64'): string {
   if (raw.trim().startsWith('[')) return raw
-  const parsed = parseTargetDirectory(raw)
+  const parsed = parseTargetDirectory(raw, architecture)
   if (!parsed) return raw
   return formatTargetDirectory(parsed.rootId, parsed.segments.join('\\'))
 }
@@ -157,7 +167,7 @@ export function normalizeTargetDirectoryToken(raw: string): string {
  * bare root (nothing to show) or an unparseable value.
  */
 export function targetDirectoryNestingLabels(manifest: WinReleaseManifest): string[] {
-  const parsed = parseTargetDirectory(manifest.targetDirectory)
+  const parsed = parseTargetDirectory(manifest.targetDirectory, manifest.architecture)
   if (!parsed || parsed.segments.length === 0) return []
   const rootFriendlyName = INSTALL_ROOTS.find((r) => r.label === `[${parsed.rootId}]`)?.friendlyName ?? parsed.rootId
   return [rootFriendlyName, ...parsed.segments]
@@ -176,10 +186,10 @@ const RAW_ROOT_IDS: Partial<Record<InstallRoot, TargetDirectoryRootId>> = {
 }
 
 function installFolderBasePath(manifest: WinReleaseManifest): string {
-  const parsed = parseTargetDirectory(manifest.targetDirectory)
-  if (!parsed) return exampleBasePath('ProgramFiles64Folder', manifest.architecture)
+  const parsed = parseTargetDirectory(manifest.targetDirectory, manifest.architecture)
+  if (!parsed) return exampleBasePath('ProgramFiles64Folder')
   const subpath = parsed.segments.length > 0 ? `\\${parsed.segments.join('\\')}` : ''
-  return `${exampleBasePath(parsed.rootId, manifest.architecture)}${subpath}`
+  return `${exampleBasePath(parsed.rootId)}${subpath}`
 }
 
 /**
@@ -195,7 +205,7 @@ function collapseBackslashes(path: string): string {
 
 /** Illustrative resolved OS path for a target - Files & Folders' live footer bar. */
 export function resolvedPathPreview(manifest: WinReleaseManifest, target: ActiveTarget): string {
-  const base = target.root === 'installFolder' ? installFolderBasePath(manifest) : exampleBasePath(RAW_ROOT_IDS[target.root]!, manifest.architecture)
+  const base = target.root === 'installFolder' ? installFolderBasePath(manifest) : exampleBasePath(RAW_ROOT_IDS[target.root]!)
   const suffix = target.prefix.length > 0 ? `\\${target.prefix.replace(/\//g, '\\')}` : ''
   return collapseBackslashes(`${base}${suffix}\\`)
 }
@@ -207,7 +217,7 @@ export function resolvedPathPreview(manifest: WinReleaseManifest, target: Active
  * separator this function always appends.
  */
 export function selectedTargetTokenPreview(manifest: WinReleaseManifest, target: ActiveTarget): string {
-  const base = target.root === 'installFolder' ? normalizeTargetDirectoryToken(manifest.targetDirectory) : (INSTALL_ROOTS.find((r) => r.root === target.root)?.label ?? target.root)
+  const base = target.root === 'installFolder' ? normalizeTargetDirectoryToken(manifest.targetDirectory, manifest.architecture) : (INSTALL_ROOTS.find((r) => r.root === target.root)?.label ?? target.root)
   const suffix = target.prefix.length > 0 ? `\\${target.prefix.replace(/\//g, '\\')}` : ''
   return collapseBackslashes(`${base}${suffix}\\`)
 }
@@ -237,7 +247,7 @@ export function defaultProgramFilesRootId(architecture: PackageArchitecture): 'P
 
 /** The raw TargetDirectoryRootId that `installFolder`'s Target Directory resolves to exactly, when it has no subpath - null otherwise (a subpath makes it a distinct real subfolder, not a duplicate of the raw root). */
 function bareTargetDirectoryRootMatch(manifest: WinReleaseManifest): TargetDirectoryRootId | null {
-  const parsed = parseTargetDirectory(manifest.targetDirectory)
+  const parsed = parseTargetDirectory(manifest.targetDirectory, manifest.architecture)
   if (!parsed || parsed.segments.length > 0) return null
   return parsed.rootId
 }
@@ -277,7 +287,7 @@ export function visibleTargetDirectoryRoots(architecture: PackageArchitecture): 
  * convenience default, never a forced rewrite of a root the user chose on purpose.
  */
 export function targetDirectoryForArchitectureChange(manifest: WinReleaseManifest, architecture: PackageArchitecture): string {
-  const parsed = parseTargetDirectory(manifest.targetDirectory)
+  const parsed = parseTargetDirectory(manifest.targetDirectory, manifest.architecture)
   if (!parsed || (parsed.rootId !== 'ProgramFiles64Folder' && parsed.rootId !== 'ProgramFilesFolder')) return manifest.targetDirectory
 
   const nextRoot = defaultProgramFilesRootId(architecture)
@@ -662,7 +672,7 @@ export function defaultTargetDirectory(manufacturer: string, name: string, root:
  */
 export function withNameOrManufacturerChange(manifest: WinReleaseManifest, next: { name?: string; manufacturer?: string }): WinReleaseManifest {
   const updated = { ...manifest, ...next }
-  const parsed = parseTargetDirectory(manifest.targetDirectory)
+  const parsed = parseTargetDirectory(manifest.targetDirectory, manifest.architecture)
   // A bare root (nothing chosen yet) stays bare: WinRelease suggests a folder (suggestedTargetDirectory) but never fills one in unasked (ADR 0095).
   if (!parsed || isBareTarget(parsed)) return updated
 
@@ -680,7 +690,7 @@ function isBareTarget(parsed: { rootId: string; segments: string[] }): boolean {
 
 /** The `Manufacturer\Name` folder WinRelease would suggest under the current root, offered as a one-click choice and never applied automatically. Null when nothing is left to suggest or a folder is already chosen. */
 export function suggestedTargetDirectory(manifest: WinReleaseManifest): string | null {
-  const parsed = parseTargetDirectory(manifest.targetDirectory)
+  const parsed = parseTargetDirectory(manifest.targetDirectory, manifest.architecture)
   if (!parsed || !isBareTarget(parsed)) return null
 
   const suggestion = defaultTargetDirectory(manifest.manufacturer, manifest.name, parsed.rootId)
@@ -703,7 +713,7 @@ const AUTO_ROOTS: readonly TargetDirectoryRootId[] = ['ProgramFiles64Folder', 'P
  */
 export function withInstallScope(manifest: WinReleaseManifest, scope: InstallScope): WinReleaseManifest {
   const updated = { ...manifest, appInfo: { ...manifest.appInfo, installScope: scope } }
-  const parsed = parseTargetDirectory(manifest.targetDirectory)
+  const parsed = parseTargetDirectory(manifest.targetDirectory, manifest.architecture)
   if (!parsed || !AUTO_ROOTS.includes(parsed.rootId)) return updated
 
   // A bare root (nothing chosen) moves with the scope and stays bare.
@@ -742,7 +752,7 @@ export function scopeWarnings(manifest: WinReleaseManifest): string[] {
   if (manifest.appInfo.installScope !== 'perUser') return []
 
   const warnings: string[] = []
-  const parsed = parseTargetDirectory(manifest.targetDirectory)
+  const parsed = parseTargetDirectory(manifest.targetDirectory, manifest.architecture)
   if (parsed && ADMIN_ONLY_ROOTS.has(parsed.rootId)) {
     warnings.push('The Install Directory is under a folder that needs administrator rights, so a per-user install without admin will fail. Use [LocalAppDataFolder]Programs\\... instead.')
   }
@@ -839,7 +849,7 @@ export function itemCountUnderTargetWithHarvest(manifest: WinReleaseManifest, so
  * the files go in the Install Directory below. Returns the next folder down and the Install Directory's name when `target` is one of them.
  */
 export function installPathAncestorInfo(manifest: WinReleaseManifest, target: ActiveTarget): { childName: string; installName: string } | null {
-  const parsed = parseTargetDirectory(manifest.targetDirectory)
+  const parsed = parseTargetDirectory(manifest.targetDirectory, manifest.architecture)
   if (!parsed || parsed.segments.length < 2 || target.prefix === '') return null
 
   const nestRoot = INSTALL_ROOTS.find((r) => r.label === `[${parsed.rootId}]`)?.root
@@ -856,7 +866,7 @@ export function installPathAncestorInfo(manifest: WinReleaseManifest, target: Ac
 /** The always-visible folder a target lives under once the tree is collapsed to its top level - the standard root, or the one the Install Directory is nested in. */
 export function topLevelTarget(manifest: WinReleaseManifest, target: ActiveTarget): ActiveTarget {
   if (target.root === 'installFolder') {
-    const parsed = parseTargetDirectory(manifest.targetDirectory)
+    const parsed = parseTargetDirectory(manifest.targetDirectory, manifest.architecture)
     const host = parsed && parsed.segments.length > 0 ? INSTALL_ROOTS.find((r) => r.label === `[${parsed.rootId}]`)?.root : undefined
     if (host && visibleInstallRoots(manifest).some((r) => r.root === host)) return { root: host, prefix: '' }
   }

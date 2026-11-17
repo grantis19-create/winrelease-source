@@ -161,7 +161,7 @@ public static class WxsGenerator
             // ICE38: a file under the user profile (AppData/LocalAppData, or an install folder that sits there) needs
             // an HKCU registry KeyPath rather than the file itself (ADR 0085).
             var inProfile = root is InstallRoot.AppDataFolder or InstallRoot.LocalAppDataFolder
-                || (root == InstallRoot.InstallFolder && TargetDirectoryResolver.TryParse(manifest.TargetDirectory, out var profileRootId, out _) && profileRootId is "AppDataFolder" or "LocalAppDataFolder");
+                || (root == InstallRoot.InstallFolder && TargetDirectoryResolver.TryParse(manifest.TargetDirectory, out var profileRootId, out _, manifest.Architecture) && profileRootId is "AppDataFolder" or "LocalAppDataFolder");
             Place(TreeFor(root), installPath, file with { Always32Bit = always32, InUserProfile = inProfile });
         }
 
@@ -170,7 +170,7 @@ public static class WxsGenerator
         // ADR 0038: the product's own folder (INSTALLFOLDER) sits wherever manifest.TargetDirectory
         // resolves to - a developer-chosen root + subpath, not a fixed Manufacturer-subfolder
         // convention (supersedes ADR 0037's InstallUnderManufacturerFolder boolean).
-        if (!TargetDirectoryResolver.TryParse(manifest.TargetDirectory, out var targetRootId, out var targetSegments))
+        if (!TargetDirectoryResolver.TryParse(manifest.TargetDirectory, out var targetRootId, out var targetSegments, manifest.Architecture))
         {
             // WinReleaseManifest.Validate() rejects this before compilation is ever reached -
             // fall back to the v1 default rather than throw, so a hand-built manifest that skips
