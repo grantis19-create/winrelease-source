@@ -9,6 +9,8 @@ import type { WinReleaseManifest } from '../types/manifest'
 export const FEEDBACK_REPO_URL = 'https://github.com/grantis19-create/winrelease-feedback'
 /** The published source, for inspection (ADR 0117). Security problems are reported privately through this repository's security tab. */
 export const SOURCE_REPO_URL = 'https://github.com/grantis19-create/winrelease-source'
+/** The licences and notices of the other people's software inside the Helper and this site (also attached to every Helper release). */
+export const THIRD_PARTY_NOTICES_URL = `${SOURCE_REPO_URL}/blob/main/THIRD-PARTY-NOTICES.md`
 export const SECURITY_REPORT_URL = `${SOURCE_REPO_URL}/security/advisories/new`
 
 const OUTCOME_KEY = 'winrelease:last-build-outcome'

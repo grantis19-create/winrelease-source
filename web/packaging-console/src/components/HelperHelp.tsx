@@ -23,7 +23,7 @@ export function HelperDownloadPanel({ defaultCollapsed = false, forceExpanded = 
       <div className="flex flex-col gap-2 text-sm text-ink">
         <p>
           <a className="text-brand hover:underline" href={HELPER_DOWNLOAD_URL}>
-            Download WinRelease.Helper.exe (v{HELPER_LATEST_VERSION}, about 47 MB)
+            Download WinRelease.Helper.exe (v{HELPER_LATEST_VERSION}, about 48 MB)
           </a>
         </p>
         <p className="text-muted">
@@ -53,14 +53,14 @@ export function HelperSetupPanel({ defaultCollapsed = false, forceExpanded = fal
         <li>
           <strong>Download the Helper.</strong>{' '}
           <a className="text-brand hover:underline" href={HELPER_DOWNLOAD_URL}>
-            Download WinRelease.Helper.exe (v{HELPER_LATEST_VERSION}, about 47 MB)
+            Download WinRelease.Helper.exe (v{HELPER_LATEST_VERSION}, about 48 MB)
           </a>
           . Nothing to unzip: running it installs it for you (next steps).
         </li>
         <li>
           <strong>Install the WiX compiler once.</strong> The Helper itself needs nothing installed, but the MSI is built by Microsoft&apos;s WiX
           tool, which is a separate .NET tool. In a terminal, run these commands:
-          <CopyCommand command="winget install Microsoft.DotNet.SDK.9 --source winget" />
+          <CopyCommand command="winget install Microsoft.DotNet.SDK.10 --source winget" />
           <p className="mt-1.5 text-xs text-muted">
             On an older Windows 11 image, winget can stop with <span className="text-ink">Failed when opening source(s)</span> or a certificate error from
             &ldquo;msstore&rdquo;; the <code>--source winget</code> part avoids that. If winget still fails, update <strong>App Installer</strong> in the
@@ -75,7 +75,7 @@ export function HelperSetupPanel({ defaultCollapsed = false, forceExpanded = fal
           </p>
           <CopyCommand command="wix extension add --global WixToolset.UI.wixext/7.0.0 -acceptEula wix7" />
           <p className="mt-1.5 text-xs text-muted">
-            Already have the .NET 9 SDK? Skip the first command. If WiX is missing, the connection check warns you (and the Helper&apos;s log file says so).
+            Already have a .NET SDK (version 8 or newer)? Skip the first command. If WiX is missing, the connection check warns you (and the Helper&apos;s log file says so).
             Use a normal terminal, not &ldquo;Run as administrator&rdquo;: the tool installs for the Windows user running it.
           </p>
           <p className="mt-1.5 text-xs text-muted">
@@ -174,7 +174,7 @@ export function AboutHelperPanel({ defaultCollapsed = false, forceExpanded = fal
         <div className={row}>
           <dt className="font-medium text-ink">Check what you downloaded</dt>
           <dd className="text-muted">
-            This is v{HELPER_LATEST_VERSION}, about 47 MB, from this project&apos;s GitHub releases. Its SHA-256 should match this value; in PowerShell,
+            This is v{HELPER_LATEST_VERSION}, about 48 MB, from this project&apos;s GitHub releases. Its SHA-256 should match this value; in PowerShell,
             run <code>Get-FileHash .\WinRelease.Helper.exe</code> and compare:
             <code className="mt-1 block break-all rounded bg-panel-alt px-2 py-1 text-[11px] text-ink">{HELPER_SHA256}</code>
             {smartScreenWhy()}

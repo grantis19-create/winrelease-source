@@ -151,7 +151,7 @@ builder.Services.AddCors(options =>
             // response-header visibility on genuinely cross-origin responses - exactly the case a
             // helper is for. Without it, apiUploadForBlobToBackend's filename regex silently falls
             // back to "artifact.bin" and the build log panel stays empty, no error thrown either way.
-            .WithExposedHeaders("Content-Disposition", "X-Wix-StdOut-Base64", "X-Wix-StdErr-Base64")));
+            .WithExposedHeaders("Content-Disposition", "X-Wix-StdOut-Base64", "X-Wix-StdErr-Base64", "X-Product-Code")));
 
 var maxUploadBytes = builder.Configuration.GetValue("Limits:MaxUploadMegabytes", 200) * 1024L * 1024L;
 builder.WebHost.ConfigureKestrel(options => options.Limits.MaxRequestBodySize = maxUploadBytes);
@@ -443,6 +443,8 @@ app.MapPost("/api/build", async (HttpRequest request, BuildGate gate) =>
             statusCode: StatusCodes.Status422UnprocessableEntity);
     }
 
+    // ADR 0120: the ProductCode of this build is random, so the Console shows the one actually inside the MSI.
+    request.HttpContext.Response.Headers["X-Product-Code"] = outcome.ProductCode!.Value.ToString("D").ToUpperInvariant();
     request.HttpContext.Response.Headers["X-Wix-StdOut-Base64"] = Convert.ToBase64String(Encoding.UTF8.GetBytes(outcome.StandardOutput ?? ""));
     request.HttpContext.Response.Headers["X-Wix-StdErr-Base64"] = Convert.ToBase64String(Encoding.UTF8.GetBytes(outcome.StandardError ?? ""));
 
@@ -502,13 +504,13 @@ app.Lifetime.ApplicationStarted.Register(() =>
 {
     if (dotnetSdkVersion.Value is null)
     {
-        app.Logger.LogWarning("The .NET SDK was not found. Install it first:  winget install Microsoft.DotNet.SDK.9  (then open a new terminal and start this Helper again).");
+        app.Logger.LogWarning("The .NET SDK was not found. Install it first:  winget install Microsoft.DotNet.SDK.10  (then open a new terminal and start this Helper again).");
     }
 
     if (!wixAvailable.Value)
     {
         app.Logger.LogWarning(
-            "The 'wix' tool was not found. Builds will fail until it is installed: install the .NET 9 SDK, then run  dotnet tool install --global wix --version 7.0.0  and restart this Helper.");
+            "The 'wix' tool was not found. Builds will fail until it is installed: install the .NET 10 SDK, then run  dotnet tool install --global wix --version 7.0.0  and restart this Helper.");
     }
 });
 
@@ -596,7 +598,7 @@ public sealed record QuitRequest(string? Version);
 /// </summary>
 public static class HelperVersion
 {
-    public const string Current = "0.1.16";
+    public const string Current = "0.1.17";
 }
 
 /// <summary>

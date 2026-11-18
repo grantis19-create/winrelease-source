@@ -98,7 +98,7 @@ public static class WxsGenerator
     /// <param name="manifest">The parsed, validated manifest.</param>
     /// <param name="sourceRoot">Base directory that every relative sourcePath/sourceFolder in the manifest resolves against.</param>
     /// <param name="generatedRoot">Where build-time generated files (URL shortcuts' .url files, ADR 0052) live; defaults to a subfolder of <paramref name="sourceRoot"/>. <see cref="WixCompiler"/> passes its own temp directory.</param>
-    public static XDocument Generate(WinReleaseManifest manifest, string sourceRoot, string? generatedRoot = null)
+    public static XDocument Generate(WinReleaseManifest manifest, string sourceRoot, string? generatedRoot = null, Guid? productCode = null)
     {
         var trees = new Dictionary<InstallRoot, DirectoryNode>();
 
@@ -305,9 +305,8 @@ public static class WxsGenerator
             new XAttribute("Manufacturer", manifest.Manufacturer),
             new XAttribute("Version", manifest.ResolvedProductVersion),
             new XAttribute("UpgradeCode", manifest.UpgradeCode.ToString("B").ToUpperInvariant()),
-            // ADR 0027: pinned rather than left to WiX's per-build auto-generation, so
-            // WinRelease.Intune can compute the same ProductCode from the manifest alone.
-            new XAttribute("ProductCode", ProductCode.For(manifest).ToString("B").ToUpperInvariant()),
+            // ADR 0120: written out so the caller knows the code (the compiler passes the one it generated for this build; a pinned manifest value wins).
+            new XAttribute("ProductCode", (productCode ?? ProductCode.ForNewBuild(manifest)).ToString("B").ToUpperInvariant()),
             // ADR 0005 default (per-machine) still holds for a brand-new manifest, but
             // AppInfo.InstallScope now actually drives this - promoted from UI-only to functional
             // by the "Graceful Ingestion" pass, specifically so an imported per-user source's real
@@ -321,7 +320,10 @@ public static class WxsGenerator
             // [ProductName] is a standard MSI property, resolved by the installer itself at
             // runtime from the Package/@Name above - not manually interpolated here, so the
             // message can never drift out of sync with whatever ProductName actually resolves to.
+            // ADR 0120: every build has its own random ProductCode, so a rebuild of the same version is a different product to Windows Installer. Allowing same-version
+            // upgrades makes it replace the earlier build instead of installing beside it (checked with msiexec on 2026-11-18).
             new XElement(Namespace + "MajorUpgrade",
+                new XAttribute("AllowSameVersionUpgrades", "yes"),
                 new XAttribute("DowngradeErrorMessage", "A newer version of [ProductName] is already installed.")),
             // Always embed the cabinet - a single self-contained .msi with no external .cab
             // dependency to lose track of. See the "Always embed the cabinet" pass.

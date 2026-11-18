@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <NoWarn>$(NoWarn);CA1416</NoWarn>
@@ -9,8 +9,8 @@
     <Product>WinRelease Helper</Product>
     <Company>GE App Solutions</Company>
     <Copyright>(c) GE App Solutions. All rights reserved.</Copyright>
-    <FileVersion>0.1.16</FileVersion>
-    <Version>0.1.16</Version>
+    <FileVersion>0.1.17</FileVersion>
+    <Version>0.1.17</Version>
   </PropertyGroup>
 
   <ItemGroup>

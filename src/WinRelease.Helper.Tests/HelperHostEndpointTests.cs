@@ -338,6 +338,8 @@ public sealed class HelperHostEndpointTests : IClassFixture<WinReleaseHelperFact
         Assert.EndsWith(".msi", response.Content.Headers.ContentDisposition!.FileName!.Trim('"'));
         Assert.True(response.Headers.Contains("X-Wix-StdOut-Base64"));
         Assert.True(response.Headers.Contains("X-Wix-StdErr-Base64"));
+        // ADR 0120: each build gets its own random ProductCode, reported so the Console can show the one inside the MSI.
+        Assert.True(Guid.TryParse(response.Headers.GetValues("X-Product-Code").Single(), out var builtCode) && builtCode != Guid.Empty);
     }
 
     /// <summary>Requires the real `wix` CLI on PATH.</summary>

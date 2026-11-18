@@ -31,7 +31,7 @@ public sealed class WixSetupTests
 
         Assert.Contains("dotnet tool install --global wix --version 7.0.0", title);
         Assert.Contains(WixSetup.AddUiExtensionCommand, title);
-        Assert.Contains("winget install Microsoft.DotNet.SDK.9", title);
+        Assert.Contains("winget install Microsoft.DotNet.SDK.10", title);
         Assert.Contains("no restart needed", title);
     }
 

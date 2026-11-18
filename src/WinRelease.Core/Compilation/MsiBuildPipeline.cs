@@ -2,7 +2,7 @@ using WinRelease.Core.Manifest;
 
 namespace WinRelease.Core.Compilation;
 
-public sealed record MsiBuildOutcome(bool Succeeded, string StandardOutput, string StandardError, byte[]? MsiBytes, string? FileName);
+public sealed record MsiBuildOutcome(bool Succeeded, string StandardOutput, string StandardError, byte[]? MsiBytes, string? FileName, Guid? ProductCode = null);
 
 /// <summary>
 /// The shared "sources zip + manifest -> .msi bytes" step: extracts the zip into a throwaway working
@@ -20,6 +20,12 @@ public static class MsiBuildPipeline
         BuildLimits? limits = null)
     {
         limits ??= BuildLimits.Default;
+        if (MinimumRequirements.HasNothingToInstall(manifest))
+        {
+            // ADR 0122: wix would happily build an MSI with no components; say so before any work is done.
+            return new MsiBuildOutcome(false, "", MinimumRequirements.NothingToInstallMessage, null, null);
+        }
+
         var workDir = Directory.CreateTempSubdirectory("winrelease-build-").FullName;
         var sourcesDir = Path.Combine(workDir, "sources");
         var outputDir = Path.Combine(workDir, "output");
@@ -78,7 +84,7 @@ public static class MsiBuildPipeline
             var log = notes.Count == 0
                 ? result.StandardOutput
                 : string.Join(Environment.NewLine, notes.Select(n => "WinRelease note: " + n)) + Environment.NewLine + result.StandardOutput;
-            return new MsiBuildOutcome(true, log, result.StandardError, msiBytes, Path.GetFileName(result.OutputMsiPath!));
+            return new MsiBuildOutcome(true, log, result.StandardError, msiBytes, Path.GetFileName(result.OutputMsiPath!), result.ProductCode);
         }
         catch (BuildInputException ex)
         {

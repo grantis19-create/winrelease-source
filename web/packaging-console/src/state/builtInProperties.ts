@@ -37,7 +37,7 @@ export function builtInProperties(
     {
       id: 'ProductCode',
       value: (manifest.productCode || resolved.productCode || '').toUpperCase() || null,
-      absentNote: 'worked out from the Upgrade Code and version - shown once the Helper has checked the project',
+      absentNote: 'a random one, chosen for each build',
       setBy: 'General > Product Code',
     },
     { id: 'UpgradeCode', value: `{${manifest.upgradeCode.toUpperCase().replace(/[{}]/g, '')}}`, setBy: 'General > Upgrade Code' },

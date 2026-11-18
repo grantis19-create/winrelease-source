@@ -239,10 +239,8 @@ export interface WinReleaseManifest {
    * installUnderManufacturerFolder boolean - see ADR 0038.
    */
   targetDirectory: string
-  /** Overrides the deterministic default ProductCode. Null means "use the derived value" - see resolvedProductCode. ADR 0038. */
+  /** Pins the ProductCode. Null means a new random one for every build (ADR 0120); the one a build used is reported with the built MSI, not part of the manifest. ADR 0038. */
   productCode?: string | null
-  /** Server-computed effective ProductCode (manifest.productCode when set, else the deterministic default) - present on responses. See ADR 0038. */
-  readonly resolvedProductCode?: string
   /**
    * The build architecture passed to `wix build -arch`. Defaults to x64. A single-select choice
    * - ADR 0042's multi-select checkboxes (x64/arm64 selectable together) were reverted by

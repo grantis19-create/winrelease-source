@@ -7,6 +7,7 @@ import { recordBuildOutcome } from './supportReport'
 import { buildZip } from './zipBuilder'
 import { loadBuiltMsi, saveBuiltMsi } from './builtMsiStore'
 import { projectFingerprint } from './projectFingerprint'
+import { newGuid } from './guid'
 import type { WinReleaseManifest } from '../types/manifest'
 
 export interface BuildResult {
@@ -19,6 +20,8 @@ export interface BuildResult {
   sourceFiles: number
   /** projectFingerprint at build time: when it no longer matches the project, this MSI is out of date. */
   fingerprint: string
+  /** The random ProductCode this build put in the MSI (ADR 0120); absent for an Intune package and for MSIs stored before this was recorded. */
+  productCode?: string
   /** Built in an earlier visit and brought back from this browser's storage. */
   restored?: boolean
 }
@@ -79,6 +82,9 @@ export function useBuild(
   const [helperNeeded, setHelperNeeded] = useState(false)
   const [log, setLog] = useState<BuildLog | null>(null)
   const [results, setResults] = useState<BuildResult[]>([])
+  // ADR 0120: the random Product Code the next MSI build will use. It is shown in General from the start, sent with the build, and replaced by a fresh one once a build has used it,
+  // so a rebuilt installer is a new build to Windows Installer. A Product Code pinned in the manifest wins and is never rolled.
+  const [nextProductCode, setNextProductCode] = useState(newGuid)
 
   const hasStagedFiles = sourceFiles.size > 0
   // A package does not have to deliver files: registry values, environment variables or shortcuts alone are a valid MSI (UAT T4-26/27).
@@ -101,7 +107,7 @@ export function useBuild(
       setResults((prev) =>
         prev.some((r) => r.kind === 'msi')
           ? (URL.revokeObjectURL(url), prev)
-          : [...prev, { kind: 'msi', url, fileName: stored.fileName, builtAt: new Date(stored.builtAt), bytes: stored.blob.size, sourceFiles: stored.sourceFiles, fingerprint: stored.fingerprint, restored: true }],
+          : [...prev, { kind: 'msi', url, fileName: stored.fileName, builtAt: new Date(stored.builtAt), bytes: stored.blob.size, sourceFiles: stored.sourceFiles, fingerprint: stored.fingerprint, productCode: stored.productCode, restored: true }],
       )
     })
     return () => {
@@ -136,15 +142,20 @@ export function useBuild(
       if (onBeforeBuild) await onBeforeBuild()
       const sourcesZip = hasStagedFiles || manualZip === null ? await buildZip(sourceFiles) : manualZip
       requestSent = true
-      const { blob, fileName, standardOutput, standardError } =
-        job === 'msi' ? await buildMsi(manifest, sourcesZip, projectId) : await packageIntune(manifest, sourcesZip, projectId)
+      const usesNextCode = job === 'msi' && !manifest.productCode
+      const manifestToBuild = usesNextCode ? { ...manifest, productCode: nextProductCode } : manifest
+      const { blob, fileName, standardOutput, standardError, productCode: reportedCode } =
+        job === 'msi' ? await buildMsi(manifestToBuild, sourcesZip, projectId) : await packageIntune(manifest, sourcesZip, projectId)
+      // The code inside the MSI: what the build reported, else the one we sent (a Helper that predates the X-Product-Code header).
+      const productCode = reportedCode ?? (job === 'msi' ? manifestToBuild.productCode?.toUpperCase() : undefined)
+      if (usesNextCode) setNextProductCode(newGuid())
       const url = URL.createObjectURL(blob)
       // Only the latest build of each kind is kept: a second click replaces the first instead of stacking identically named downloads.
       setResults((prev) => {
         prev.filter((r) => r.kind === job).forEach((r) => URL.revokeObjectURL(r.url))
-        return [...prev.filter((r) => r.kind !== job), { kind: job, url, fileName, builtAt: new Date(), bytes: blob.size, sourceFiles: sourceSummary.files + sourceSummary.icons, fingerprint }]
+        return [...prev.filter((r) => r.kind !== job), { kind: job, url, fileName, builtAt: new Date(), bytes: blob.size, sourceFiles: sourceSummary.files + sourceSummary.icons, fingerprint, productCode }]
       })
-      if (job === 'msi' && projectId) void saveBuiltMsi({ projectId, fileName, blob, builtAt: Date.now(), fingerprint, sourceFiles: sourceSummary.files + sourceSummary.icons, standardOutput, standardError })
+      if (job === 'msi' && projectId) void saveBuiltMsi({ projectId, fileName, blob, builtAt: Date.now(), fingerprint, sourceFiles: sourceSummary.files + sourceSummary.icons, standardOutput, standardError, productCode })
       setLog({ standardOutput, standardError })
       recordBuildOutcome({ job, ok: true, projectName: manifest.name, standardOutput, standardError })
     } catch (e) {
@@ -182,7 +193,7 @@ export function useBuild(
       ? 'There is nothing to install yet - add files, registry entries, environment variables or shortcuts.'
       : `This project names files that have nothing attached yet${missingSources.length > 0 ? ` (${missingSources.slice(0, 3).join(', ')}${missingSources.length > 3 ? ', …' : ''})` : ''}. Add them in Files & Folders.`
 
-  return { manualZip, setManualZip, running, error, helperNeeded, log, results, hasStagedFiles, stagedCount: sourceFiles.size, sourceSummary, fingerprint, canRun, needsFiles, missingSources, blockedReason, run }
+  return { nextProductCode, newProductCodeForNextBuild: () => setNextProductCode(newGuid()), manualZip, setManualZip, running, error, helperNeeded, log, results, hasStagedFiles, stagedCount: sourceFiles.size, sourceSummary, fingerprint, canRun, needsFiles, missingSources, blockedReason, run }
 }
 
 export type BuildState = ReturnType<typeof useBuild>

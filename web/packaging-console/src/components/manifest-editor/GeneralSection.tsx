@@ -171,13 +171,19 @@ function composeLocalPath(root: TargetDirectoryRootId, subpath: string): string 
 export function GeneralSection({
   manifest,
   onChange,
-  resolvedProductCode,
+  lastBuiltProductCode,
+  autoProductCode,
+  onNewAutoProductCode,
   sourceFiles,
 }: {
   manifest: WinReleaseManifest
   onChange: (next: WinReleaseManifest) => void
-  /** The automatic Product Code the compiler will use (derived from Upgrade Code + version), as computed by the server's validation. */
-  resolvedProductCode?: string
+  /** The random Product Code the latest build put in its MSI (ADR 0120), shown under the field when no code is pinned. */
+  lastBuiltProductCode?: string
+  /** The random Product Code the next build will use when none is pinned (ADR 0120); shown in the field from the start. */
+  autoProductCode?: string
+  /** Replaces that code with another random one. */
+  onNewAutoProductCode?: () => void
   /** Staged file blobs (session-local, keyed by sourcePath) - only source of a detected Product Version suggestion (executable detection). Omitted entirely when the caller has none to offer. */
   sourceFiles?: Map<string, File>
 }) {
@@ -191,7 +197,8 @@ export function GeneralSection({
   // a few iterations of a similar package (hit this, bump Product Version, change a file, compile) -
   // each wand click should be a one-step action, no confirmation in the way of that.
   function generateNewProductCode() {
-    onChange({ ...manifest, productCode: newGuid() })
+    if (manifest.productCode) onChange({ ...manifest, productCode: newGuid() })
+    else onNewAutoProductCode?.()
   }
 
   // Upgrade Code is what Windows Installer actually keys upgrade/uninstall recognition off -
@@ -203,7 +210,7 @@ export function GeneralSection({
     onChange({ ...manifest, upgradeCode: newGuid() })
   }
 
-  const productCodeShown = (manifest.productCode || resolvedProductCode || '').toUpperCase()
+  const productCodeShown = (manifest.productCode ?? autoProductCode ?? '').toUpperCase()
 
   return (
     <Panel icon={Info} title="General">
@@ -260,7 +267,7 @@ export function GeneralSection({
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <GuidField
               label="Product Code"
-              hint="Identifies this exact version for Windows Installer. Left alone, WinRelease derives a different one for every Product Version, so upgrades just work. If you set your own (the wand or a pasted GUID), it is yours to manage: use a different Product Code for every new Product Version. A new version that reuses the same Product Code is refused by Windows (“another version of this product is already installed”), not installed as an upgrade. WinRelease never changes it for you."
+              hint="Identifies one build of your installer to Windows Installer. WinRelease fills in a random one, uses it for the next build, then makes a new one, as WiX does, so a rebuilt installer replaces the one before it and upgrades just work. If you type or paste your own, it stays fixed for every build (Pinned) and is yours to manage: use a different Product Code for every new Product Version. A new version that reuses the same Product Code is refused by Windows (“another version of this product is already installed”), not installed as an upgrade."
               value={productCodeShown}
               badge={
                 manifest.productCode ? (
@@ -271,7 +278,7 @@ export function GeneralSection({
               }
               onCommit={(guid) => onChange({ ...manifest, productCode: guid })}
               actions={
-                <button type="button" onClick={generateNewProductCode} title="Generate a new random Product Code" className="text-muted hover:text-brand">
+                <button type="button" onClick={generateNewProductCode} title="Generate another random Product Code" className="text-muted hover:text-brand">
                   <Wand2 size={14} />
                 </button>
               }
@@ -289,6 +296,11 @@ export function GeneralSection({
               }
             />
           </div>
+          {!manifest.productCode && lastBuiltProductCode && (
+            <p className="mt-2 text-[11px] text-muted">
+              Last build used <span className="font-mono text-ink">{lastBuiltProductCode}</span>. The code above is for the next build.
+            </p>
+          )}
           {manifest.productCode && (
             <p role="note" className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-warn">
               <span>

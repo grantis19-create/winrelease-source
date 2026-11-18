@@ -14,6 +14,7 @@ export function GuidField({
   value,
   badge,
   actions,
+  placeholder,
   onCommit,
 }: {
   label: ReactNode
@@ -21,6 +22,8 @@ export function GuidField({
   value: string
   badge?: ReactNode
   actions?: ReactNode
+  /** Shown while the field is empty (for a code that is not stored, e.g. one made fresh for every build). */
+  placeholder?: string
   onCommit: (guid: string) => void
 }) {
   const [text, setText] = useState(value)
@@ -53,6 +56,7 @@ export function GuidField({
       <div className="relative">
         <TextInput
           value={text}
+          placeholder={placeholder}
           onChange={(e) => setText(e.target.value.toUpperCase())}
           onBlur={commit}
           onKeyDown={(e) => {

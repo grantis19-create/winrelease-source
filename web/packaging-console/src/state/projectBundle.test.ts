@@ -18,6 +18,20 @@ describe('project bundle', () => {
     expect(await opened.files.find((f) => f.path === 'data/config.ini')!.file.text()).toBe('[a]\nb=1')
   })
 
+  it('keeps a pinned Product Code and the Upgrade Code, and leaves an unpinned Product Code unpinned (ADR 0120)', async () => {
+    const pinned = { ...createEmptyManifest(), name: 'Pinned', productCode: '0A1B2C3D-4E5F-4A6B-8C7D-9E0F1A2B3C4D' }
+    const auto = { ...createEmptyManifest(), name: 'Auto', productCode: null }
+
+    const reopenedPinned = (await readProjectBundle(new File([await createProjectBundle(pinned, new Map())], 'p.winrelease.zip'))).manifest
+    const reopenedAuto = (await readProjectBundle(new File([await createProjectBundle(auto, new Map())], 'a.winrelease.zip'))).manifest
+
+    expect(reopenedPinned.productCode).toBe('0A1B2C3D-4E5F-4A6B-8C7D-9E0F1A2B3C4D')
+    expect(reopenedPinned.upgradeCode).toBe(pinned.upgradeCode)
+    // Nothing is stored for the automatic case: each build still gets its own random code, and the Upgrade Code is what ties the builds together.
+    expect(reopenedAuto.productCode ?? null).toBeNull()
+    expect(reopenedAuto.upgradeCode).toBe(auto.upgradeCode)
+  })
+
   it('normalizes Windows-style paths inside the bundle', async () => {
     const blob = await createProjectBundle(createEmptyManifest(), new Map([['sub\\x.txt', new File(['x'], 'x.txt')]]))
 

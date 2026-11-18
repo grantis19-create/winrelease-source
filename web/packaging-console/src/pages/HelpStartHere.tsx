@@ -185,8 +185,8 @@ export function GoingFurtherPanels() {
                 <strong>Product Version</strong>: raise it for every release.
               </>,
               <>
-                <strong>Product Code</strong>: different for every version. Left alone, WinRelease makes a new one each time you change the Product Version, and that is what lets the new version
-                replace the old one.
+                <strong>Product Code</strong>: different for every build. Left alone, WinRelease makes a new random one each time you build, the way WiX does, and that is what lets a new
+                version, or a rebuild of the same version, replace the old one.
               </>,
               <>
                 <strong>Package Code</strong>: a fresh one for every build, made for you. There is nothing to set.

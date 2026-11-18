@@ -9,6 +9,8 @@ namespace WinRelease.Core.Tests;
 public class WxsGeneratorTests
 {
     private static readonly XNamespace Ns = WxsGenerator.Namespace;
+    // Each Generate call gets its own random ProductCode (ADR 0120); tests that compare two documents pass the same one.
+    private static readonly Guid SameCode = new("0A1B2C3D-4E5F-4A6B-8C7D-9E0F1A2B3C4D");
 
     private static WinReleaseManifest BaseManifest(
         List<DeclaredFile>? declared = null,
@@ -216,8 +218,8 @@ public class WxsGeneratorTests
         var bracket = BaseManifest() with { TargetDirectory = "[ProgramFiles64Folder]Acme\\App" };
         var literal = BaseManifest() with { UpgradeCode = bracket.UpgradeCode, TargetDirectory = "C:\\Program Files\\Acme\\App" };
 
-        var bracketDoc = WxsGenerator.Generate(bracket, "C:/source");
-        var literalDoc = WxsGenerator.Generate(literal, "C:/source");
+        var bracketDoc = WxsGenerator.Generate(bracket, "C:/source", productCode: SameCode);
+        var literalDoc = WxsGenerator.Generate(literal, "C:/source", productCode: SameCode);
 
         Assert.Equal(bracketDoc.ToString(), literalDoc.ToString());
     }
@@ -228,8 +230,8 @@ public class WxsGeneratorTests
         var bracket = BaseManifest() with { TargetDirectory = "[CommonAppDataFolder]Acme\\App" };
         var literal = BaseManifest() with { UpgradeCode = bracket.UpgradeCode, TargetDirectory = "C:\\ProgramData\\Acme\\App" };
 
-        var bracketDoc = WxsGenerator.Generate(bracket, "C:/source");
-        var literalDoc = WxsGenerator.Generate(literal, "C:/source");
+        var bracketDoc = WxsGenerator.Generate(bracket, "C:/source", productCode: SameCode);
+        var literalDoc = WxsGenerator.Generate(literal, "C:/source", productCode: SameCode);
 
         Assert.Equal(bracketDoc.ToString(), literalDoc.ToString());
     }
@@ -290,7 +292,7 @@ public class WxsGeneratorTests
     }
 
     [Fact]
-    public void Generate_ProductCodeOverride_IsUsedInsteadOfTheDeterministicDefault()
+    public void Generate_PinnedProductCode_IsUsedInsteadOfAGeneratedOne()
     {
         var overrideCode = Guid.NewGuid();
         var manifest = BaseManifest() with { ProductCode = overrideCode };
@@ -299,6 +301,25 @@ public class WxsGeneratorTests
 
         var package = doc.Descendants(Ns + "Package").Single();
         Assert.Equal(overrideCode.ToString("B").ToUpperInvariant(), package.Attribute("ProductCode")!.Value);
+    }
+
+    [Fact]
+    public void Generate_WithAProductCodeFromTheCaller_WritesThatCode()
+    {
+        var built = Guid.NewGuid();
+
+        var doc = WxsGenerator.Generate(BaseManifest(), "C:/source", productCode: built);
+
+        Assert.Equal(built.ToString("B").ToUpperInvariant(), doc.Descendants(Ns + "Package").Single().Attribute("ProductCode")!.Value);
+    }
+
+    [Fact]
+    public void Generate_Twice_GivesTwoDifferentProductCodes_ForTheSameManifest()
+    {
+        var first = WxsGenerator.Generate(BaseManifest(), "C:/source").Descendants(Ns + "Package").Single().Attribute("ProductCode")!.Value;
+        var second = WxsGenerator.Generate(BaseManifest(), "C:/source").Descendants(Ns + "Package").Single().Attribute("ProductCode")!.Value;
+
+        Assert.NotEqual(first, second);
     }
 
     [Fact]
@@ -1268,6 +1289,15 @@ public class WxsGeneratorTests
         var doc = WxsGenerator.Generate(BaseManifest(), "C:/source");
 
         Assert.DoesNotContain(doc.Descendants(Ns + "Property"), p => p.Attribute("Id")!.Value == "ALLUSERS");
+    }
+
+    [Fact]
+    public void Generate_MajorUpgrade_AllowsSameVersionUpgrades_SoARebuildReplacesTheEarlierBuild()
+    {
+        // ADR 0120: each build has its own ProductCode, so without this a rebuild of the same version installs beside the earlier one.
+        var doc = WxsGenerator.Generate(BaseManifest(), "C:/source");
+
+        Assert.Equal("yes", doc.Descendants(Ns + "MajorUpgrade").Single().Attribute("AllowSameVersionUpgrades")!.Value);
     }
 
     [Fact]

@@ -12,6 +12,19 @@ export interface NewsEntry {
  */
 export const NEWS: NewsEntry[] = [
   {
+    id: '2026-11-18-helper-0.1.17',
+    date: '18 November 2026',
+    title: 'Helper v0.1.17: runs on .NET 10; a random Product Code for every build; stricter checks before you build',
+    items: [
+      'The Helper now runs on .NET 10 (long-term support) instead of .NET 9, which Microsoft stopped supporting on 10 November. The setup guide now installs the .NET 10 SDK; an SDK 8 or newer you already have keeps working. (Helper v0.1.17.)',
+      'Every build now gets a new random Product Code, the way WiX does it. The field in General shows the one the next build will use from the moment a project opens, and Build Output shows the one the last build used. Type or paste your own to keep it fixed (it then shows a Pinned tag). (Helper v0.1.17.)',
+      'Installing a rebuild of the same Product Version now replaces the earlier build instead of installing beside it. A lower version is still refused. (Helper v0.1.17.)',
+      'The checks before a build now catch what would only have failed later: a Product Version WiX cannot build, a file whose install path has no file name, two files to the same place, a registry Integer or Binary value that is not a number or pairs of hex digits (these built, then failed to install or stored the wrong value), and a pinned Product Code that is empty or the same as the Upgrade Code. A package with nothing in it is refused when you press Build. (Helper v0.1.17.)',
+      'The Helper’s tray menu has a Third-party notices item. The notices for the software inside the Helper and the site are also linked from Build Help and attached to every Helper release. (Helper v0.1.17.)',
+      'The front page has a new look in warmer colours, a Who is this for section, a What may come section, and more links in the footer. Links to a section of Build Help or Release notes now scroll to it.',
+    ],
+  },
+  {
     id: '2026-11-17-helper-0.1.16',
     date: '17 November 2026',
     title: 'Helper v0.1.16: System32 paths install where you typed them; a tidier Helper menu; a fuller sample',

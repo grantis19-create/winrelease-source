@@ -2,7 +2,7 @@ using WinRelease.Core.Manifest;
 
 namespace WinRelease.Core.Compilation;
 
-public sealed record CompileResult(bool Succeeded, string StandardOutput, string StandardError, string? OutputMsiPath);
+public sealed record CompileResult(bool Succeeded, string StandardOutput, string StandardError, string? OutputMsiPath, Guid? ProductCode = null);
 
 /// <summary>
 /// Compiles a manifest to a real .msi by generating WiX v5 XML in-memory and
@@ -28,7 +28,9 @@ public sealed class WixCompiler(IProcessRunner processRunner)
                 File.WriteAllText(Path.Combine(generatedRoot, fileName), content);
             }
 
-            var wxs = WxsGenerator.Generate(manifest, sourceRoot, generatedRoot);
+            // ADR 0120: one random ProductCode per build (a pinned one wins), reported back to the caller.
+            var productCode = ProductCode.ForNewBuild(manifest);
+            var wxs = WxsGenerator.Generate(manifest, sourceRoot, generatedRoot, productCode);
             var wxsPath = Path.Combine(workingDirectory, "manifest.wxs");
             wxs.Save(wxsPath);
 
@@ -53,7 +55,8 @@ public sealed class WixCompiler(IProcessRunner processRunner)
                 result.ExitCode == 0,
                 result.StandardOutput,
                 result.StandardError,
-                result.ExitCode == 0 ? outputMsiPath : null);
+                result.ExitCode == 0 ? outputMsiPath : null,
+                result.ExitCode == 0 ? productCode : null);
         }
         finally
         {

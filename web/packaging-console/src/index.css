@@ -1,12 +1,13 @@
 @import 'tailwindcss';
 
 @theme {
-  --color-canvas: #0b0c0f;
-  --color-panel: #16171d;
-  --color-panel-alt: #1c1e26;
-  --color-subtle: #2a2c36;
-  --color-ink: #e5e7eb;
-  --color-muted: #8b8d98;
+  /* Warm brown neutrals with the orange accent: the same family as the Packaging Console site (GE App Solutions). */
+  --color-canvas: #0f0b08;
+  --color-panel: #1e140f;
+  --color-panel-alt: #2a1d16;
+  --color-subtle: #412e23;
+  --color-ink: #f1e1d5;
+  --color-muted: #ab8f7c;
   --color-brand: #f97316;
   --color-brand-hover: #fb923c;
   --color-ok: #4ade80;

@@ -77,7 +77,7 @@ export async function apiUpload<T>(path: string, form: FormData): Promise<T> {
   return handle<T>(response)
 }
 
-type BlobResult = { blob: Blob; fileName: string; standardOutput?: string; standardError?: string }
+type BlobResult = { blob: Blob; fileName: string; standardOutput?: string; standardError?: string; /** The random ProductCode inside the MSI just built (ADR 0120). */ productCode?: string }
 
 /**
  * The file name from a Content-Disposition header (RFC 6266). Prefers `filename*=UTF-8''...` (percent-encoded, exact), then a quoted
@@ -118,6 +118,7 @@ async function handleBlobResponse(response: Response): Promise<BlobResult> {
     fileName,
     standardOutput: decodeBase64Header(response, 'X-Wix-StdOut-Base64'),
     standardError: decodeBase64Header(response, 'X-Wix-StdErr-Base64'),
+    productCode: response.headers.get('X-Product-Code') ?? undefined,
   }
 }
 

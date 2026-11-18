@@ -38,11 +38,9 @@ public sealed record WinReleaseManifest : IValidatableObject
     public string TargetDirectory { get; init; } = "[ProgramFiles64Folder]";
 
     /// <summary>
-    /// Overrides the deterministic default from <see cref="Compilation.ProductCode.For"/> (UUIDv5
-    /// of UpgradeCode+ResolvedProductVersion, ADR 0027). Null means "use that derived value" -
-    /// most manifests never need to set this explicitly. Once set (via the Console's
-    /// "Regenerate" action), it stays fixed across builds/version bumps rather than
-    /// auto-changing - see ADR 0038.
+    /// Pins the MSI ProductCode. Null (the default) means a new random ProductCode for every build
+    /// (ADR 0120), which is what almost every package wants. Once set (via the Console's wand
+    /// action), it stays fixed across builds/version bumps rather than auto-changing - see ADR 0038.
     /// </summary>
     public Guid? ProductCode { get; init; }
 
@@ -93,14 +91,6 @@ public sealed record WinReleaseManifest : IValidatableObject
     public string ResolvedProductVersion =>
         ProductVersion ?? VersionMapper.DeriveProductVersion(DisplayVersion);
 
-    /// <summary>
-    /// Server-computed effective ProductCode: <see cref="ProductCode"/> when explicitly set, else
-    /// the deterministic default (<see cref="Compilation.ProductCode.For"/>). Present on manifest
-    /// responses so the Console can show the real value even before a developer has ever clicked
-    /// "Regenerate". See ADR 0038.
-    /// </summary>
-    public Guid ResolvedProductCode => Compilation.ProductCode.For(this);
-
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
         // Verified against wix 7.0.0 (ADR 0047): Package/@Name and @Manufacturer reject an empty or
@@ -121,6 +111,19 @@ public sealed record WinReleaseManifest : IValidatableObject
             yield return new ValidationResult(
                 "upgradeCode must be a generated GUID, not an empty GUID.",
                 [nameof(UpgradeCode)]);
+        }
+
+        // A pinned ProductCode (ADR 0038): the empty GUID is no identity at all, and a code equal to the UpgradeCode makes the product look like its own upgrade family (ADR 0122).
+        if (ProductCode is { } pinnedProductCode)
+        {
+            if (pinnedProductCode == Guid.Empty)
+            {
+                yield return new ValidationResult("productCode must be a generated GUID, not an empty GUID (or leave it unpinned and WinRelease makes a random one).", [nameof(ProductCode)]);
+            }
+            else if (pinnedProductCode == UpgradeCode)
+            {
+                yield return new ValidationResult("productCode must differ from the upgradeCode: one identifies a build, the other the whole product family.", [nameof(ProductCode)]);
+            }
         }
 
         if (Name.Length > 255 || Manufacturer.Length > 255)
@@ -153,7 +156,14 @@ public sealed record WinReleaseManifest : IValidatableObject
                 yield return new ValidationResult($"File '{file.Id}': install path '{file.InstallPath}' - {installProblem}.", ["files.declared.installPath"]);
             }
 
-            var estimate = InstallPathLength.Estimate(this, file.Root, file.InstallPath);
+            // WiX refuses a file with no name (WIX0006, with a temp-folder path in the message): the install path must end in a file name.
+            var leaf = (file.InstallPath ?? "").Replace('/', '\\');
+            if (string.IsNullOrWhiteSpace(leaf) || leaf.EndsWith('\\') || leaf.TrimEnd().Length == 0)
+            {
+                yield return new ValidationResult($"File '{file.Id}': the install path must end in a file name, for example app.exe or sub\\app.exe.", ["files.declared.installPath"]);
+            }
+
+            var estimate = InstallPathLength.Estimate(this, file.Root, file.InstallPath ?? "");
             if (InstallPathLength.IsTooLong(estimate))
             {
                 yield return new ValidationResult(
@@ -287,6 +297,16 @@ public sealed record WinReleaseManifest : IValidatableObject
                 yield return new ValidationResult($"registry: {where} {(entry.Name.Length > 0 ? $"value '{entry.Name}'" : "(default)")} is listed more than once ({entry.Action}) - keep one.{x86Note}", ["registry.key"]);
             }
 
+            if (entry.Action == RegistryEntryAction.Write && entry.ValueType == RegistryValueType.Integer && MinimumRequirements.IntegerProblem(entry.Value) is { } integerProblem)
+            {
+                yield return new ValidationResult($"registry: {where} {(entry.Name.Length > 0 ? $"value '{entry.Name}'" : "(default)")} is an Integer, so its value {integerProblem}.", ["registry.value"]);
+            }
+
+            if (entry.Action == RegistryEntryAction.Write && entry.ValueType == RegistryValueType.Binary && MinimumRequirements.BinaryProblem(entry.Value) is { } binaryProblem)
+            {
+                yield return new ValidationResult($"registry: {where} {(entry.Name.Length > 0 ? $"value '{entry.Name}'" : "(default)")} is Binary, so its value {binaryProblem}.", ["registry.value"]);
+            }
+
             if (AppInfo.InstallScope == InstallScope.PerUser && entry.Root == RegistryRoot.Hklm)
             {
                 yield return new ValidationResult($"registry: {where} is under HKLM, but this is a per-user install - it can't write HKLM without elevation (MSI error 1406). Use HKCU, or switch to a per-machine install.", ["registry.root"]);
@@ -298,6 +318,25 @@ public sealed record WinReleaseManifest : IValidatableObject
         if (string.IsNullOrWhiteSpace(ResolvedProductVersion))
         {
             yield return new ValidationResult("productVersion can't be empty.", [nameof(ProductVersion)]);
+        }
+
+        else if (!MinimumRequirements.IsBuildableVersion(ResolvedProductVersion))
+        {
+            // wix 7.0.0 stops with WIX0108 for these, so "valid" here would only postpone the failure to the build (ADR 0122).
+            yield return new ValidationResult(
+                $"product version '{ResolvedProductVersion}' isn't a version Windows Installer can build. Use up to four numbers separated by dots, such as 1.0.0 or 1.2.3.4 (a -label such as 1.0.0-beta is allowed).",
+                [ProductVersion is null ? nameof(DisplayVersion) : nameof(ProductVersion)]);
+        }
+
+        // Two files to the same place: Windows Installer keeps one of them, so one of the files silently never arrives.
+        foreach (var group in Files.Declared
+                     .Where(f => !string.IsNullOrWhiteSpace(f.InstallPath))
+                     .GroupBy(f => (f.Root, Path: f.InstallPath.Replace('/', '\\').Trim('\\').ToLowerInvariant()))
+                     .Where(g => g.Count() > 1))
+        {
+            yield return new ValidationResult(
+                $"Files {string.Join(" and ", group.Select(f => $"'{f.Id}'"))} both install to '{group.First().InstallPath}'. A destination can hold only one file: change one of the install paths.",
+                ["files.declared.installPath"]);
         }
 
         var seenProperties = new HashSet<string>(StringComparer.Ordinal);

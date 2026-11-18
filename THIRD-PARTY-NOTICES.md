@@ -1,7 +1,7 @@
 # Third-party notices
 
 WinRelease is made by GE App Solutions Limited (see `LICENSE` for its own terms). It includes software written by other people. Their licences require that their
-copyright notices and licence texts travel with the software, and this file is where they are. Last updated 2026-11-17, for Helper v0.1.16 and the site built with it.
+copyright notices and licence texts travel with the software, and this file is where they are. Last updated 2026-11-18, for Helper v0.1.17 and the site built with it.
 
 There are two parts: the **Helper** (the program that runs on the user's PC) and the **website** (the browser app). Neither bundles WiX: the Helper uses the WiX the user
 installs, under WiX's own terms (see `README.md`).
@@ -9,7 +9,7 @@ installs, under WiX's own terms (see `README.md`).
 ## 1. The Helper (`WinRelease.Helper.exe`)
 
 The Helper is a single self-contained file. It has no NuGet or other package dependencies of its own; what is inside it besides WinRelease's own code is the Microsoft
-.NET 9 runtime and the ASP.NET Core 9 runtime (runtime packs 9.0.23, `win-x64`).
+.NET 10 runtime and the ASP.NET Core 10 runtime (runtime packs 10.0.15, `win-x64`).
 
 | Component | Licence | Source |
 |---|---|---|

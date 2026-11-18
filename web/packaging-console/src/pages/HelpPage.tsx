@@ -6,7 +6,7 @@ import { Panel } from '../components/ui/Panel'
 import { analyticsEnabled } from '../state/analytics'
 import { COMPANY } from '../state/company'
 import { disclaimerSigningLine } from '../state/helperSigning'
-import { SECURITY_REPORT_URL, SOURCE_REPO_URL } from '../state/supportReport'
+import { SECURITY_REPORT_URL, SOURCE_REPO_URL, THIRD_PARTY_NOTICES_URL } from '../state/supportReport'
 import { GoingFurtherPanels, StartHerePanels } from './HelpStartHere'
 
 /**
@@ -168,7 +168,7 @@ const GLOSSARY: [string, string][] = [
   ['Product Version', 'The version of this release. Raise it every time you ship.'],
   ['Per-user / per-machine', 'Per-user installs for one person and need no admin rights. Per-machine installs for everyone on the PC and need an administrator.'],
   ['Harvest / imported folder', 'A whole folder added to the installer in one go, with everything inside it.'],
-  ['Product Code', 'An ID for one version of your product. Automatic by default, and different for every Product Version.'],
+  ['Product Code', 'An ID for one build of your product. A new random one is made for every build, so a rebuilt installer replaces the one before it. You can pin your own.'],
   ['Package Code', 'An ID for one built MSI file. Made fresh on every build; there is nothing to set.'],
   ['Silent install', 'An install with no windows, for scripts and deployment tools (msiexec with /qn).'],
   ['Elevated prompt', 'A command window run as administrator. Needed to install for everyone on the PC.'],
@@ -273,6 +273,13 @@ export function HelpPage() {
             It listens only on your own computer, installs for your Windows user only, and makes no internet connections of its own. Each release has a SHA-256 you can check:
             the repository&apos;s VERIFY page shows how.
           </li>
+          <li>
+            WinRelease includes other people&apos;s software (the Microsoft .NET runtime in the Helper, and React and a few other libraries in this site). Their licences and notices are in{' '}
+            <a className="text-brand hover:underline" href={THIRD_PARTY_NOTICES_URL} target="_blank" rel="noreferrer">
+              the third-party notices
+            </a>
+            , which are also attached to every Helper release.
+          </li>
           <li>The source is for reading, building and checking. It is not open source: you may not redistribute it or make a product from it (see the LICENSE there).</li>
           <li>
             Found something that does not match? Report it{' '}
@@ -316,10 +323,10 @@ export function HelpPage() {
 
 /** What the test runs covered. Numbers are from the runs in tests/uat (runs/INDEX.md, docs/roadmap/vm-test-plan.md); update them when the runs change, and never claim more than was run. */
 const TESTING = [
-  '200 test packages built with the real WinRelease build and the real WiX compiler: every kind of file, folder, shortcut, registry entry, COM class, environment variable, property, version and install scope, plus 54 hostile or broken inputs (zip bombs, path tricks, damaged files) that are all refused safely.',
+  '200 test packages built with the real WinRelease build and the real WiX compiler: every kind of file, folder, shortcut, registry entry, COM class, environment variable, property, version and install scope, plus a set of deliberately broken or unsafe inputs that are all refused safely.',
   'Every package passes Microsoft’s own installer validation (ICE) and an administrative extract before it is installed.',
   'About 1,800 checks on real installs: install, check the files, registry, shortcuts, COM and environment variables, repair, uninstall and confirm nothing is left behind, upgrade, and refuse a downgrade. All pass.',
-  'Real software wrapped, installed and removed cleanly: 7-Zip, Git for Windows, GitHub CLI, Inno Setup and Notion.',
+  'Real software wrapped, installed and removed cleanly: 7-Zip, Git for Windows, GitHub CLI and Notion.',
   'The installer screens a person sees: the UAC prompt, the refusal for a standard user, a silent install that shows no window, and the Repair and Remove pages.',
   'The Helper: first run, update over the previous version, start with Windows, uninstall, no Windows Firewall prompt, and it only listens on your own computer.',
   'Hard cases: 32-bit and 64-bit content in a 64-bit package, real COM and ODBC registration, long and non-Latin names, a forced failure that rolls back cleanly, and a per-user install and removal by a standard user.',

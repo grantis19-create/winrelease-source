@@ -49,7 +49,6 @@ export function ProjectEditorPage() {
   const [loadedProjectId, setLoadedProjectId] = useState<string | null>(null)
   const [draft, setDraft] = useState<WinReleaseManifest | null>(null)
   // The automatic Product Code the compiler will use for this draft, as the server's validation computes it (ADR 0054).
-  const [resolvedProductCode, setResolvedProductCode] = useState<string | undefined>(undefined)
   const [resolvedProductVersion, setResolvedProductVersion] = useState<string | undefined>(undefined)
 
   // Session-local only, never persisted (ADR 0033 - "Set as Primary" is a UX
@@ -350,12 +349,11 @@ export function ProjectEditorPage() {
       ))}
 
       <ValidationBanner manifest={draft} onResolved={(m) => {
-        setResolvedProductCode(m.resolvedProductCode)
         setResolvedProductVersion(m.resolvedProductVersion)
       }} />
       </div>
 
-      <GeneralSection manifest={draft} onChange={updateDraft} resolvedProductCode={resolvedProductCode} sourceFiles={sourceFiles} />
+      <GeneralSection manifest={draft} onChange={updateDraft} lastBuiltProductCode={latestMsi?.productCode} autoProductCode={build.nextProductCode} onNewAutoProductCode={build.newProductCodeForNextBuild} sourceFiles={sourceFiles} />
       <AppInfoSection manifest={draft} onChange={updateDraft} sourceFiles={sourceFiles} onStageFiles={stageFiles} />
       <FilesSection
         manifest={draft}
@@ -374,7 +372,7 @@ export function ProjectEditorPage() {
         summary="Environment variables, MSI properties and the manifest JSON - most installers don't need these."
       >
         <EnvironmentVariablesSection manifest={draft} onChange={updateDraft} />
-        <PropertiesSection manifest={draft} onChange={updateDraft} resolved={{ productCode: resolvedProductCode, productVersion: resolvedProductVersion }} />
+        <PropertiesSection manifest={draft} onChange={updateDraft} resolved={{ productCode: build.nextProductCode, productVersion: resolvedProductVersion }} />
         <JsonPreviewPanel manifest={draft} />
       </AdvancedGroup>
       {!isMvpMode() && (

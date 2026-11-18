@@ -8,7 +8,7 @@ namespace WinRelease.Helper;
 /// <summary>
 /// The Helper's windowless presence (ADR 0102): a notification-area (tray) icon with a small menu, a single-instance guard, the
 /// <c>winrelease-helper:</c> link type that lets the website start it, and a per-user "start with Windows" switch. Plain Win32 through
-/// P/Invoke, not WinForms, so the project stays a portable net9.0 build that the test project can reference.
+/// P/Invoke, not WinForms, so the project stays a portable net10.0 build that the test project can reference.
 /// </summary>
 [SupportedOSPlatform("windows")]
 public sealed class HelperTray : IDisposable
@@ -24,7 +24,10 @@ public sealed class HelperTray : IDisposable
     private const uint WM_APP_TRAY = 0x8001;
     private const uint NIM_ADD = 0, NIM_DELETE = 2;
     private const uint NIF_MESSAGE = 1, NIF_ICON = 2, NIF_TIP = 4;
-    private const int IdStatus = 1, IdOpenSite = 2, IdOpenLog = 3, IdAutoStart = 4, IdQuit = 5, IdUninstall = 6;
+    private const int IdStatus = 1, IdOpenSite = 2, IdOpenLog = 3, IdAutoStart = 4, IdQuit = 5, IdUninstall = 6, IdNotices = 7;
+
+    /// <summary>The licences and notices of the other people's software inside the Helper. Opened in the user's browser, like "Open WinRelease"; the Helper itself makes no request.</summary>
+    internal const string NoticesUrl = "https://github.com/grantis19-create/winrelease-source/blob/main/THIRD-PARTY-NOTICES.md";
 
     private readonly string _siteUrl;
     private readonly string _logPath;
@@ -177,6 +180,7 @@ public sealed class HelperTray : IDisposable
         AppendMenu(menu, 0x800 /* MF_SEPARATOR */, 0, null);
         AppendMenu(menu, 0, IdOpenSite, "Open WinRelease");
         AppendMenu(menu, 0, IdOpenLog, "Open log file");
+        AppendMenu(menu, 0, IdNotices, "Third-party notices");
         AppendMenu(menu, IsAutoStartEnabled() ? 0x8u /* MF_CHECKED */ : 0u, IdAutoStart, "Start with Windows");
         AppendMenu(menu, 0x800, 0, null);
         AppendMenu(menu, 0, IdUninstall, "Uninstall...");
@@ -199,6 +203,9 @@ public sealed class HelperTray : IDisposable
                 break;
             case IdOpenLog:
                 Open(_logPath);
+                break;
+            case IdNotices:
+                Open(NoticesUrl);
                 break;
             case IdAutoStart:
                 SetAutoStart(!IsAutoStartEnabled(), Environment.ProcessPath ?? "");

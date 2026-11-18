@@ -3,6 +3,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import { App } from './App.tsx'
+import { ScrollToHash } from './components/ScrollToHash'
 import './index.css'
 import { startAnalytics } from './state/analytics'
 import { applyTheme, getStoredTheme } from './state/theme'
@@ -16,6 +17,7 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
+        <ScrollToHash />
         <App />
       </BrowserRouter>
     </QueryClientProvider>

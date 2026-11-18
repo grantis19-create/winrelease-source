@@ -1,6 +1,6 @@
 # Building and testing
 
-You need the .NET 9 SDK (and Node.js 20 or later for the website). On a machine with only a newer SDK, set `DOTNET_ROLL_FORWARD=Major`.
+You need the .NET 10 SDK (and Node.js 20 or later for the website). On a machine with only a newer SDK, set `DOTNET_ROLL_FORWARD=Major`.
 
 ## The Helper
 

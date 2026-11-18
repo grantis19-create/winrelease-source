@@ -147,6 +147,11 @@ export function BuildPanel({ build }: { build: BuildState }) {
                   ({BUILD_RESULT_LABELS[result.kind]}, {formatBytes(result.bytes)}, built {formatBuiltAt(result.builtAt)}
                   {result.kind === 'msi' && result.fingerprint !== fingerprint && <span className="text-warn"> - out of date</span>})
                 </span>
+                {result.productCode && (
+                  <span className="mt-0.5 block text-xs text-muted" title="A new random Product Code is made for every build, unless you pin one in General.">
+                    Product Code <span className="font-mono text-ink">{result.productCode}</span>
+                  </span>
+                )}
               </span>
               <a href={result.url} download={result.fileName} className="flex items-center gap-1 text-brand hover:text-brand-hover">
                 <Download size={14} /> Download

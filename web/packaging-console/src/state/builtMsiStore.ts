@@ -16,6 +16,8 @@ export interface StoredBuild {
   /** The compiler's output for that build, so its log is still there when the MSI is brought back. */
   standardOutput?: string
   standardError?: string
+  /** The ProductCode inside that MSI (ADR 0120). */
+  productCode?: string
 }
 
 function open(): Promise<IDBDatabase> {

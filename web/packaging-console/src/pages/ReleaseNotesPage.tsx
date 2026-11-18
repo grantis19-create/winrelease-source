@@ -20,6 +20,7 @@ export const KNOWN_LIMITATIONS: string[] = ([
 
 /** Ideas only. No dates and no promises: the page says so. Keep each line to something the owner would genuinely consider. */
 export const CONSIDERING: string[] = [
+  'More of what the WiX Toolset can do: depending on demand, the editor may grow to cover more of the WiX features, so more kinds of installer can be built here.',
   'Building in the cloud with nothing to install: for when you cannot or would rather not install the Helper. Your files would be uploaded for the build and deleted straight after, and the Helper would stay the default.',
   'A winget manifest builder: describe your installer once and get the winget manifest files ready to submit.',
   'A bundle builder: chain prerequisites and your MSI into one setup.exe.',

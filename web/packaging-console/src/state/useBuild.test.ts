@@ -107,3 +107,65 @@ describe('useBuild keeps the MSI and notices when the project moves on', () => {
     expect(built.fingerprint).toBe(result.current.fingerprint)
   })
 })
+
+describe('useBuild Product Code (ADR 0120)', () => {
+  const GUID = /^[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/
+
+  function succeed() {
+    URL.createObjectURL = vi.fn(() => 'blob:msi')
+    URL.revokeObjectURL = vi.fn()
+    mocks.resolveBackend.mockResolvedValue(helper)
+    mocks.buildMsi.mockResolvedValue({ blob: new Blob(['msi']), fileName: 'App-1.0.0.msi', standardOutput: '', standardError: '' })
+  }
+
+  it('offers a random Product Code from the start, builds with it, then makes a new one', async () => {
+    succeed()
+    const { result } = renderHook(() => useBuild(registryOnlyManifest(), new Map()))
+    const first = result.current.nextProductCode
+    expect(first).toMatch(GUID)
+
+    await act(() => result.current.run('msi'))
+
+    expect(mocks.buildMsi.mock.calls[0][0].productCode).toBe(first)
+    expect(result.current.nextProductCode).toMatch(GUID)
+    expect(result.current.nextProductCode).not.toBe(first)
+    // With a Helper that does not report the code, the build still records the one it sent.
+    expect(result.current.results.find((r) => r.kind === 'msi')!.productCode).toBe(first)
+  })
+
+  it('sends a pinned Product Code as it is and never rolls it', async () => {
+    succeed()
+    const pinned = { ...registryOnlyManifest(), productCode: '0A1B2C3D-4E5F-4A6B-8C7D-9E0F1A2B3C4D' }
+    const { result } = renderHook(() => useBuild(pinned, new Map()))
+    const offered = result.current.nextProductCode
+
+    await act(() => result.current.run('msi'))
+    await act(() => result.current.run('msi'))
+
+    expect(mocks.buildMsi.mock.calls.map((c) => c[0].productCode)).toEqual([pinned.productCode, pinned.productCode])
+    expect(result.current.nextProductCode).toBe(offered)
+  })
+
+  it('keeps the code when a build fails, because no MSI used it', async () => {
+    mocks.resolveBackend.mockResolvedValue(helper)
+    mocks.buildMsi.mockRejectedValue(new ApiError(422, 'wix failed'))
+    const { result } = renderHook(() => useBuild(registryOnlyManifest(), new Map()))
+    const offered = result.current.nextProductCode
+
+    await act(() => result.current.run('msi'))
+
+    expect(result.current.nextProductCode).toBe(offered)
+  })
+
+  it('does not change the project fingerprint when the code rolls', async () => {
+    succeed()
+    const manifest = registryOnlyManifest()
+    const files = new Map<string, File>()
+    const { result } = renderHook(() => useBuild(manifest, files))
+    const before = result.current.fingerprint
+
+    await act(() => result.current.run('msi'))
+
+    expect(result.current.fingerprint).toBe(before)
+  })
+})

@@ -18,7 +18,7 @@ public static class WixSetup
     /// <summary>The headline when the <c>wix</c> tool itself is not on this PC (a build was asked for before the setup guide's step 2): plain words and the two commands.</summary>
     public const string MissingToolTitle =
         "WiX is not installed on this PC yet, so the MSI cannot be built. In a normal terminal run: dotnet tool install --global wix --version 7.0.0  then  " +
-        AddUiExtensionCommand + "  (this needs the .NET 9 SDK first: winget install Microsoft.DotNet.SDK.9). The Helper notices when it is done, no restart needed. See Settings for the full steps.";
+        AddUiExtensionCommand + "  (this needs the .NET 10 SDK first: winget install Microsoft.DotNet.SDK.10). The Helper notices when it is done, no restart needed. See Settings for the full steps.";
 
     /// <summary>True when the output of <c>wix extension list --global</c> includes the UI extension.</summary>
     public static bool ListShowsUiExtension(string? listOutput) =>
